@@ -21,6 +21,10 @@ export interface BaseElement {
 export interface TextElement extends BaseElement {
   type: 'text';
   content: string;
+  fontSize?: number; // Font size in pixels (default: 16)
+  fontColor?: string; // Hex color (default: #000000)
+  fontFamily?: string; // Google Font name (default: Inter)
+  fontWeight?: number; // Font weight (default: 400)
 }
 
 export interface LinkElement extends BaseElement {
