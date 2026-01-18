@@ -190,46 +190,38 @@ export async function processAndUploadImage(file: File): Promise<string> {
   }
 }
 
+// Key for storing current background filename in localStorage
+const BG_FILENAME_KEY = 'spacer_bg_filename';
+
 /**
- * Upload background image - uses unique filename per upload
- * Deletes old background and tracks current one
+ * Upload background image - tracks current filename in localStorage
+ * Deletes old background before uploading new one
  */
 export async function uploadBackgroundImage(file: File): Promise<string> {
   const { supabase } = useSupabase();
 
-  // Use timestamp for unique filename, but prefix with 'bg-' for easy identification
+  // Use timestamp for unique filename
   const timestamp = Date.now();
-  const filePath = `bg-${timestamp}.webp`;
+  const newFilePath = `bg-${timestamp}.webp`;
 
   try {
     // Resize and convert to WebP
     const webpBlob = await resizeImage(file, 1920, 1920);
 
-    // List ALL files in root of bucket (no search parameter - it doesn't work reliably)
-    const { data: existingFiles, error: listError } = await supabase.storage.from('uploads').list();
-
-    console.log('Existing files in bucket:', existingFiles);
-
-    if (existingFiles && existingFiles.length > 0) {
-      // Filter to only bg- files (not folders)
-      const filesToDelete = existingFiles
-        .filter((f) => f.name && f.name.startsWith('bg-') && !f.id?.includes('/'))
-        .map((f) => f.name);
-
-      console.log('Files to delete:', filesToDelete);
-
-      if (filesToDelete.length > 0) {
-        const { error: deleteError } = await supabase.storage.from('uploads').remove(filesToDelete);
-        if (deleteError) {
-          console.error('Delete error:', deleteError);
-        } else {
-          console.log('Successfully deleted old backgrounds');
-        }
+    // Get the old filename from localStorage and delete it
+    const oldFilename = localStorage.getItem(BG_FILENAME_KEY);
+    if (oldFilename) {
+      console.log('Deleting old background:', oldFilename);
+      const { error: deleteError } = await supabase.storage.from('uploads').remove([oldFilename]);
+      if (deleteError) {
+        console.warn('Could not delete old background:', deleteError.message);
+      } else {
+        console.log('Successfully deleted old background');
       }
     }
 
     // Upload new file
-    const { data, error } = await supabase.storage.from('uploads').upload(filePath, webpBlob, {
+    const { data, error } = await supabase.storage.from('uploads').upload(newFilePath, webpBlob, {
       contentType: 'image/webp',
     });
 
@@ -237,12 +229,14 @@ export async function uploadBackgroundImage(file: File): Promise<string> {
       throw new Error(`Failed to upload image: ${error.message}`);
     }
 
-    console.log('Uploaded new background:', filePath);
+    // Save new filename to localStorage
+    localStorage.setItem(BG_FILENAME_KEY, newFilePath);
+    console.log('Uploaded new background:', newFilePath);
 
     // Get public URL with cache buster
     const {
       data: { publicUrl },
-    } = supabase.storage.from('uploads').getPublicUrl(filePath);
+    } = supabase.storage.from('uploads').getPublicUrl(newFilePath);
 
     return `${publicUrl}?t=${timestamp}`;
   } catch (error) {
