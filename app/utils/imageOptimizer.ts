@@ -111,31 +111,40 @@ export async function resizeImage(file: File, maxWidth: number = 1920, maxHeight
 
 /**
  * Upload image to Supabase Storage
+ * @param blob - Image blob to upload
+ * @param fileName - Original filename (for cover images, used to generate unique name)
+ * @param fixedPath - If provided, use this exact path (overwrites existing)
  */
-export async function uploadImageToSupabase(blob: Blob, fileName: string): Promise<string> {
+export async function uploadImageToSupabase(blob: Blob, fileName: string, fixedPath?: string): Promise<string> {
   const { supabase } = useSupabase();
 
-  // Generate unique filename with timestamp
-  const timestamp = Date.now();
-  const uniqueFileName = `${timestamp}-${fileName.replace(/\.[^/.]+$/, '')}.webp`;
-  const filePath = `images/${uniqueFileName}`;
+  // Use fixed path for overwrites, or generate unique filename
+  let filePath: string;
+  if (fixedPath) {
+    filePath = fixedPath;
+  } else {
+    const timestamp = Date.now();
+    const uniqueFileName = `${timestamp}-${fileName.replace(/\.[^/.]+$/, '')}.webp`;
+    filePath = `images/${uniqueFileName}`;
+  }
 
-  // Upload to Supabase Storage
+  // Upload to Supabase Storage with upsert:true to overwrite existing
   const { data, error } = await supabase.storage.from('uploads').upload(filePath, blob, {
     contentType: 'image/webp',
-    upsert: false,
+    upsert: true, // This will overwrite if file exists
   });
 
   if (error) {
     throw new Error(`Failed to upload image: ${error.message}`);
   }
 
-  // Get public URL
+  // Get public URL with cache buster to prevent caching issues
   const {
     data: { publicUrl },
   } = supabase.storage.from('uploads').getPublicUrl(filePath);
 
-  return publicUrl;
+  // Add cache buster to URL
+  return `${publicUrl}?t=${Date.now()}`;
 }
 
 /**
@@ -177,6 +186,25 @@ export async function processAndUploadImage(file: File): Promise<string> {
     return publicUrl;
   } catch (error) {
     console.error('Error processing image:', error);
+    throw error;
+  }
+}
+
+/**
+ * Upload background image - uses fixed path so it always overwrites
+ * This ensures only ONE background image exists at a time
+ */
+export async function uploadBackgroundImage(file: File): Promise<string> {
+  try {
+    // Resize and convert to WebP
+    const webpBlob = await resizeImage(file, 1920, 1920);
+
+    // Upload to fixed path - will OVERWRITE existing background
+    const publicUrl = await uploadImageToSupabase(webpBlob, file.name, 'background.webp');
+
+    return publicUrl;
+  } catch (error) {
+    console.error('Error uploading background image:', error);
     throw error;
   }
 }
