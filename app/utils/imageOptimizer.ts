@@ -139,6 +139,31 @@ export async function uploadImageToSupabase(blob: Blob, fileName: string): Promi
 }
 
 /**
+ * Delete image from Supabase Storage by URL
+ */
+export async function deleteImageFromSupabase(imageUrl: string): Promise<void> {
+  const { supabase } = useSupabase();
+
+  // Extract file path from URL
+  // URL format: https://[project].supabase.co/storage/v1/object/public/uploads/images/[filename].webp
+  const urlParts = imageUrl.split('/uploads/');
+  if (urlParts.length < 2 || !urlParts[1]) {
+    console.warn('Invalid image URL format, cannot delete:', imageUrl);
+    return;
+  }
+
+  const filePath = urlParts[1];
+
+  // Delete from Supabase Storage
+  const { error } = await supabase.storage.from('uploads').remove([filePath]);
+
+  if (error) {
+    console.error('Failed to delete image:', error.message);
+    // Don't throw error - just log it, so upload can continue
+  }
+}
+
+/**
  * Process and upload image (resize + convert to WebP + upload)
  */
 export async function processAndUploadImage(file: File): Promise<string> {

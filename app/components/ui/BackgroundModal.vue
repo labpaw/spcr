@@ -83,7 +83,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import type { BackgroundTheme } from '~/types';
-import { processAndUploadImage } from '~/utils/imageOptimizer';
+import { processAndUploadImage, deleteImageFromSupabase } from '~/utils/imageOptimizer';
 
 interface Props {
   visible: boolean;
@@ -173,7 +173,15 @@ const selectImage = async () => {
   try {
     isUploading.value = true;
 
-    // Process and upload image (resize, convert to WebP, upload to Supabase)
+    // Delete old background image if it exists and is from Supabase
+    if (props.currentBackground.startsWith('url(')) {
+      const oldImageUrl = props.currentBackground.match(/url\((.*?)\)/)?.[1];
+      if (oldImageUrl && oldImageUrl.includes('/uploads/')) {
+        await deleteImageFromSupabase(oldImageUrl);
+      }
+    }
+
+    // Process and upload new image (resize, convert to WebP, upload to Supabase)
     const publicUrl = await processAndUploadImage(currentFile.value);
 
     // Create CSS url() syntax for background image
@@ -191,7 +199,15 @@ const selectImage = async () => {
   }
 };
 
-const removeBackgroundImage = () => {
+const removeBackgroundImage = async () => {
+  // Delete old background image if it exists and is from Supabase
+  if (props.currentBackground.startsWith('url(')) {
+    const oldImageUrl = props.currentBackground.match(/url\((.*?)\)/)?.[1];
+    if (oldImageUrl && oldImageUrl.includes('/uploads/')) {
+      await deleteImageFromSupabase(oldImageUrl);
+    }
+  }
+
   emit('select', customColor.value);
   emit('close');
 };
