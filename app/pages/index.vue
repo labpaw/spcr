@@ -110,9 +110,11 @@
       :themes="BACKGROUND_THEMES"
       :current-background="canvasBackground"
       :blur="backgroundBlur"
+      :blur-amount="blurAmount"
       @close="showBgModal = false"
       @select="handleBackgroundSelect"
       @update:blur="setBlur"
+      @update:blur-amount="setBlurAmount"
     />
 
     <!-- Shape Modal -->
@@ -185,7 +187,16 @@ const showCoverImageModal = ref(false);
 
 // Composables
 const { elements, loadElements, saveElements, addElement, deleteElement } = useElements();
-const { canvasBackground, backgroundBlur, backgroundStyle, blurStyle, setBackground, setBlur } = useBackground();
+const {
+  canvasBackground,
+  backgroundBlur,
+  blurAmount,
+  backgroundStyle,
+  blurStyle,
+  setBackground,
+  setBlur,
+  setBlurAmount,
+} = useBackground();
 const { dragState, startDrag, startTouchDrag, stopDrag } = useDrag(saveElements);
 const { startResize } = useResize(saveElements);
 

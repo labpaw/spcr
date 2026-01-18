@@ -75,6 +75,22 @@
                 <span class="toggle-knob"></span>
               </button>
             </label>
+
+            <!-- Blur Amount Slider -->
+            <div v-if="localBlur" class="blur-slider-wrapper">
+              <label class="slider-label">
+                <span class="slider-text">Blur Amount</span>
+                <span class="slider-value">{{ localBlurAmount }}px</span>
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="30"
+                :value="localBlurAmount"
+                @input="updateBlurAmount(Number(($event.target as HTMLInputElement).value))"
+                class="blur-slider"
+              />
+            </div>
           </div>
 
           <button v-if="imagePreview" class="apply-button" @click="selectImage" :disabled="isUploading">
@@ -100,6 +116,7 @@ interface Props {
   themes: BackgroundTheme[];
   currentBackground: string;
   blur: boolean;
+  blurAmount: number;
 }
 
 const props = defineProps<Props>();
@@ -107,9 +124,11 @@ const emit = defineEmits<{
   close: [];
   select: [value: string];
   'update:blur': [value: boolean];
+  'update:blurAmount': [value: number];
 }>();
 
 const localBlur = ref(props.blur);
+const localBlurAmount = ref(props.blurAmount);
 
 // Watch for external blur changes
 watch(
@@ -119,10 +138,24 @@ watch(
   },
 );
 
+// Watch for external blur amount changes
+watch(
+  () => props.blurAmount,
+  (newVal) => {
+    localBlurAmount.value = newVal;
+  },
+);
+
 // Emit blur changes
 const toggleBlur = () => {
   localBlur.value = !localBlur.value;
   emit('update:blur', localBlur.value);
+};
+
+// Emit blur amount changes
+const updateBlurAmount = (value: number) => {
+  localBlurAmount.value = value;
+  emit('update:blurAmount', value);
 };
 
 const activeTab = ref<'color' | 'image'>('color');
@@ -545,6 +578,67 @@ const removeBackgroundImage = () => {
 
 .toggle-switch.active .toggle-knob {
   transform: translateX(20px);
+}
+
+.blur-slider-wrapper {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.slider-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.slider-text {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.slider-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: #3b82f6;
+}
+
+.blur-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.blur-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s;
+}
+
+.blur-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.blur-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes fadeIn {

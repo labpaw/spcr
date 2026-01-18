@@ -6,10 +6,12 @@ import { ref, onMounted, computed } from 'vue';
 import { STORAGE_KEYS, DEFAULT_BACKGROUND } from '~/config/constants';
 
 const BLUR_STORAGE_KEY = 'spacer_bg_blur';
+const BLUR_AMOUNT_KEY = 'spacer_bg_blur_amount';
 
 export const useBackground = () => {
   const canvasBackground = ref<string>(DEFAULT_BACKGROUND);
   const backgroundBlur = ref<boolean>(false);
+  const blurAmount = ref<number>(8); // Default blur amount in pixels
 
   /**
    * Computed property to format background for CSS
@@ -35,9 +37,9 @@ export const useBackground = () => {
    * Computed property for blur filter
    */
   const blurStyle = computed(() => {
-    if (backgroundBlur.value) {
+    if (backgroundBlur.value && blurAmount.value > 0) {
       return {
-        filter: 'blur(8px)',
+        filter: `blur(${blurAmount.value}px)`,
         transform: 'scale(1.1)', // Prevent blur edge artifacts
       };
     }
@@ -58,6 +60,11 @@ export const useBackground = () => {
     const savedBlur = localStorage.getItem(BLUR_STORAGE_KEY);
     if (savedBlur) {
       backgroundBlur.value = savedBlur === 'true';
+    }
+
+    const savedBlurAmount = localStorage.getItem(BLUR_AMOUNT_KEY);
+    if (savedBlurAmount) {
+      blurAmount.value = parseInt(savedBlurAmount, 10) || 8;
     }
   };
 
@@ -88,6 +95,16 @@ export const useBackground = () => {
     setBlur(!backgroundBlur.value);
   };
 
+  /**
+   * Set and save blur amount
+   */
+  const setBlurAmount = (value: number) => {
+    blurAmount.value = value;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(BLUR_AMOUNT_KEY, String(value));
+    }
+  };
+
   // Auto-load on mount
   onMounted(() => {
     loadBackground();
@@ -96,10 +113,12 @@ export const useBackground = () => {
   return {
     canvasBackground,
     backgroundBlur,
+    blurAmount,
     backgroundStyle,
     blurStyle,
     setBackground,
     setBlur,
+    setBlurAmount,
     toggleBlur,
     loadBackground,
   };
