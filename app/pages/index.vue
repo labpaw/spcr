@@ -20,6 +20,7 @@
         position: 'absolute',
       }"
       @mousedown.stop="handleMouseDown(element, $event)"
+      @touchstart.stop="handleTouchStart(element, $event)"
       @click.stop="handleElementClick(element)"
       @contextmenu.prevent.stop="handleElementContextMenu(element, $event)"
     >
@@ -99,7 +100,7 @@
     <ElementContextMenu
       :visible="
         showContextMenu &&
-        contextMenuElement &&
+        !!contextMenuElement &&
         (contextMenuElement.type === 'text' || contextMenuElement.type === 'link')
       "
       :position="contextMenuPosition"
@@ -186,7 +187,7 @@ const showCoverImageModal = ref(false);
 // Composables
 const { elements, loadElements, saveElements, addElement, deleteElement } = useElements();
 const { canvasBackground, backgroundStyle, setBackground } = useBackground();
-const { dragState, startDrag, stopDrag } = useDrag(saveElements);
+const { dragState, startDrag, startTouchDrag, stopDrag } = useDrag(saveElements);
 const { startResize } = useResize(saveElements);
 
 // Lifecycle
@@ -322,6 +323,23 @@ const handleMouseDown = (element: SpacerElement, e: MouseEvent) => {
   }
 
   startDrag(element, e);
+};
+
+/**
+ * Handle touch start on element (mobile)
+ */
+const handleTouchStart = (element: SpacerElement, e: TouchEvent) => {
+  // Close any open menus
+  showTypeSelector.value = false;
+
+  if (editingId.value === element.id) return;
+
+  // Don't allow dragging locked elements
+  if (element.type === 'image' && (element as ImageElementType).locked) {
+    return;
+  }
+
+  startTouchDrag(element, e);
 };
 
 /**
