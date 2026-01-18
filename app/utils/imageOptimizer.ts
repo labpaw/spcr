@@ -205,16 +205,26 @@ export async function uploadBackgroundImage(file: File): Promise<string> {
     // Resize and convert to WebP
     const webpBlob = await resizeImage(file, 1920, 1920);
 
-    // List existing background files and delete them
-    const { data: existingFiles } = await supabase.storage.from('uploads').list('', {
-      search: 'bg-',
-    });
+    // List ALL files in root of bucket (no search parameter - it doesn't work reliably)
+    const { data: existingFiles, error: listError } = await supabase.storage.from('uploads').list();
+
+    console.log('Existing files in bucket:', existingFiles);
 
     if (existingFiles && existingFiles.length > 0) {
-      const filesToDelete = existingFiles.filter((f) => f.name.startsWith('bg-')).map((f) => f.name);
+      // Filter to only bg- files (not folders)
+      const filesToDelete = existingFiles
+        .filter((f) => f.name && f.name.startsWith('bg-') && !f.id?.includes('/'))
+        .map((f) => f.name);
+
+      console.log('Files to delete:', filesToDelete);
 
       if (filesToDelete.length > 0) {
-        await supabase.storage.from('uploads').remove(filesToDelete);
+        const { error: deleteError } = await supabase.storage.from('uploads').remove(filesToDelete);
+        if (deleteError) {
+          console.error('Delete error:', deleteError);
+        } else {
+          console.log('Successfully deleted old backgrounds');
+        }
       }
     }
 
@@ -226,6 +236,8 @@ export async function uploadBackgroundImage(file: File): Promise<string> {
     if (error) {
       throw new Error(`Failed to upload image: ${error.message}`);
     }
+
+    console.log('Uploaded new background:', filePath);
 
     // Get public URL with cache buster
     const {
