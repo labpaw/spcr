@@ -1,11 +1,8 @@
 <template>
-  <div
-    class="spacer-canvas"
-    @click="handleCanvasClick"
-    @contextmenu.prevent="handleContextMenu"
-    ref="canvasRef"
-    :style="backgroundStyle"
-  >
+  <div class="spacer-canvas" @click="handleCanvasClick" @contextmenu.prevent="handleContextMenu" ref="canvasRef">
+    <!-- Background Layer (separate so blur doesn't affect content) -->
+    <div class="background-layer" :style="{ ...backgroundStyle, ...blurStyle }"></div>
+
     <!-- Canvas Elements -->
     <div
       v-for="element in elements"
@@ -112,8 +109,10 @@
       :visible="showBgModal"
       :themes="BACKGROUND_THEMES"
       :current-background="canvasBackground"
+      :blur="backgroundBlur"
       @close="showBgModal = false"
       @select="handleBackgroundSelect"
+      @update:blur="setBlur"
     />
 
     <!-- Shape Modal -->
@@ -186,7 +185,7 @@ const showCoverImageModal = ref(false);
 
 // Composables
 const { elements, loadElements, saveElements, addElement, deleteElement } = useElements();
-const { canvasBackground, backgroundStyle, setBackground } = useBackground();
+const { canvasBackground, backgroundBlur, backgroundStyle, blurStyle, setBackground, setBlur } = useBackground();
 const { dragState, startDrag, startTouchDrag, stopDrag } = useDrag(saveElements);
 const { startResize } = useResize(saveElements);
 
@@ -523,5 +522,15 @@ const handleDeleteElement = () => {
   position: relative;
   overflow: hidden;
   cursor: crosshair;
+}
+
+.background-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 </style>

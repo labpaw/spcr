@@ -67,6 +67,16 @@
             </div>
           </div>
 
+          <!-- Blur Toggle -->
+          <div class="blur-toggle" v-if="currentBackground.startsWith('url(') || imagePreview">
+            <label class="toggle-label">
+              <span class="toggle-text">Blur Background</span>
+              <button class="toggle-switch" :class="{ active: localBlur }" @click="toggleBlur">
+                <span class="toggle-knob"></span>
+              </button>
+            </label>
+          </div>
+
           <button v-if="imagePreview" class="apply-button" @click="selectImage" :disabled="isUploading">
             <span v-if="isUploading">Uploading...</span>
             <span v-else>Apply Image</span>
@@ -89,13 +99,31 @@ interface Props {
   visible: boolean;
   themes: BackgroundTheme[];
   currentBackground: string;
+  blur: boolean;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
   close: [];
   select: [value: string];
+  'update:blur': [value: boolean];
 }>();
+
+const localBlur = ref(props.blur);
+
+// Watch for external blur changes
+watch(
+  () => props.blur,
+  (newVal) => {
+    localBlur.value = newVal;
+  },
+);
+
+// Emit blur changes
+const toggleBlur = () => {
+  localBlur.value = !localBlur.value;
+  emit('update:blur', localBlur.value);
+};
 
 const activeTab = ref<'color' | 'image'>('color');
 const customColor = ref(props.currentBackground.startsWith('#') ? props.currentBackground : '#ffffff');
@@ -465,6 +493,58 @@ const removeBackgroundImage = () => {
 
 .remove-button:active {
   transform: scale(0.98);
+}
+
+.blur-toggle {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.toggle-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #d1d5db;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.toggle-switch.active {
+  background: #3b82f6;
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch.active .toggle-knob {
+  transform: translateX(20px);
 }
 
 @keyframes fadeIn {
