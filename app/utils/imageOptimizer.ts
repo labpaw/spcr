@@ -191,24 +191,36 @@ export async function processAndUploadImage(file: File): Promise<string> {
 }
 
 /**
- * Upload background image - deletes existing first, then uploads new
- * This ensures only ONE background image exists at a time
+ * Upload background image - uses unique filename per upload
+ * Deletes old background and tracks current one
  */
 export async function uploadBackgroundImage(file: File): Promise<string> {
   const { supabase } = useSupabase();
-  const filePath = 'background.webp';
+
+  // Use timestamp for unique filename, but prefix with 'bg-' for easy identification
+  const timestamp = Date.now();
+  const filePath = `bg-${timestamp}.webp`;
 
   try {
     // Resize and convert to WebP
     const webpBlob = await resizeImage(file, 1920, 1920);
 
-    // First, try to delete any existing background file (ignore errors if it doesn't exist)
-    await supabase.storage.from('uploads').remove([filePath]);
+    // List existing background files and delete them
+    const { data: existingFiles } = await supabase.storage.from('uploads').list('', {
+      search: 'bg-',
+    });
+
+    if (existingFiles && existingFiles.length > 0) {
+      const filesToDelete = existingFiles.filter((f) => f.name.startsWith('bg-')).map((f) => f.name);
+
+      if (filesToDelete.length > 0) {
+        await supabase.storage.from('uploads').remove(filesToDelete);
+      }
+    }
 
     // Upload new file
     const { data, error } = await supabase.storage.from('uploads').upload(filePath, webpBlob, {
       contentType: 'image/webp',
-      upsert: false, // Don't use upsert, we deleted first
     });
 
     if (error) {
@@ -220,7 +232,7 @@ export async function uploadBackgroundImage(file: File): Promise<string> {
       data: { publicUrl },
     } = supabase.storage.from('uploads').getPublicUrl(filePath);
 
-    return `${publicUrl}?t=${Date.now()}`;
+    return `${publicUrl}?t=${timestamp}`;
   } catch (error) {
     console.error('Error uploading background image:', error);
     throw error;
