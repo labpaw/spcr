@@ -10,30 +10,80 @@
       <div class="modal-body">
         <h3 class="modal-title">Background</h3>
 
-        <div class="color-picker-wrapper">
-          <input type="color" v-model="customColor" class="color-picker" @input="updatePreview" />
+        <!-- Tab Switcher -->
+        <div class="tab-switcher">
+          <button class="tab-button" :class="{ active: activeTab === 'color' }" @click="activeTab = 'color'">
+            <Icon name="material-symbols:palette-outline" />
+            <span>Color</span>
+          </button>
+          <button class="tab-button" :class="{ active: activeTab === 'image' }" @click="activeTab = 'image'">
+            <Icon name="material-symbols:image-outline" />
+            <span>Image</span>
+          </button>
         </div>
 
-        <div class="color-input-wrapper">
-          <input
-            type="text"
-            v-model="customColor"
-            class="color-input"
-            placeholder="#FFFFFF"
-            @input="updatePreview"
-            maxlength="7"
-          />
+        <!-- Color Tab -->
+        <div v-if="activeTab === 'color'" class="tab-content">
+          <div class="color-picker-wrapper">
+            <input type="color" v-model="customColor" class="color-picker" @input="updatePreview" />
+          </div>
+
+          <div class="color-input-wrapper">
+            <input
+              type="text"
+              v-model="customColor"
+              class="color-input"
+              placeholder="#FFFFFF"
+              @input="updatePreview"
+              maxlength="7"
+            />
+          </div>
+
+          <button class="apply-button" @click="selectColor(customColor)">Apply</button>
         </div>
 
-        <button class="apply-button" @click="selectColor(customColor)">Apply</button>
+        <!-- Image Tab -->
+        <div v-if="activeTab === 'image'" class="tab-content">
+          <div
+            class="image-upload-area"
+            :class="{ 'is-dragging': isDragging }"
+            @dragover.prevent="isDragging = true"
+            @dragleave="isDragging = false"
+            @drop.prevent="handleImageDrop"
+          >
+            <input type="file" ref="fileInput" class="file-input" accept="image/*" @change="handleImageUpload" />
+
+            <div v-if="!imagePreview" class="upload-prompt" @click="fileInput?.click()">
+              <Icon name="material-symbols:upload" class="upload-icon" />
+              <p class="upload-text">Click to upload or drag and drop</p>
+              <p class="upload-hint">JPG, PNG, GIF up to 10MB</p>
+            </div>
+
+            <div v-else class="image-preview-container">
+              <img :src="imagePreview" alt="Background preview" class="image-preview" />
+              <button class="remove-image-button" @click.stop="removeImage" title="Remove image">
+                <Icon name="material-symbols:close" />
+              </button>
+            </div>
+          </div>
+
+          <button v-if="imagePreview" class="apply-button" @click="selectImage" :disabled="isUploading">
+            <span v-if="isUploading">Uploading...</span>
+            <span v-else>Apply Image</span>
+          </button>
+          <button v-if="currentBackground.startsWith('url(')" class="remove-button" @click="removeBackgroundImage">
+            Remove Background Image
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import type { BackgroundTheme } from '~/types';
+import { processAndUploadImage } from '~/utils/imageOptimizer';
 
 interface Props {
   visible: boolean;
@@ -47,7 +97,24 @@ const emit = defineEmits<{
   select: [value: string];
 }>();
 
-const customColor = ref(props.currentBackground || '#ffffff');
+const activeTab = ref<'color' | 'image'>('color');
+const customColor = ref(props.currentBackground.startsWith('#') ? props.currentBackground : '#ffffff');
+const fileInput = ref<HTMLInputElement | null>(null);
+const imagePreview = ref<string>('');
+const uploadedImageUrl = ref<string>('');
+const isDragging = ref(false);
+const isUploading = ref(false);
+const currentFile = ref<File | null>(null);
+
+// Watch for changes in currentBackground prop
+watch(
+  () => props.currentBackground,
+  (newVal) => {
+    if (newVal.startsWith('#')) {
+      customColor.value = newVal;
+    }
+  },
+);
 
 const updatePreview = () => {
   // Live preview - could emit preview event if needed
@@ -55,6 +122,77 @@ const updatePreview = () => {
 
 const selectColor = (value: string) => {
   emit('select', value);
+  emit('close');
+};
+
+const handleImageUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) {
+    processImage(file);
+  }
+};
+
+const handleImageDrop = (event: DragEvent) => {
+  isDragging.value = false;
+  const file = event.dataTransfer?.files?.[0];
+  if (file && file.type.startsWith('image/')) {
+    processImage(file);
+  }
+};
+
+const processImage = (file: File) => {
+  // Check file size (10MB limit)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('Image size must be less than 10MB');
+    return;
+  }
+
+  currentFile.value = file;
+
+  // Create preview
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imagePreview.value = e.target?.result as string;
+  };
+  reader.readAsDataURL(file);
+};
+
+const removeImage = () => {
+  imagePreview.value = '';
+  uploadedImageUrl.value = '';
+  currentFile.value = null;
+  if (fileInput.value) {
+    fileInput.value.value = '';
+  }
+};
+
+const selectImage = async () => {
+  if (!currentFile.value) return;
+
+  try {
+    isUploading.value = true;
+
+    // Process and upload image (resize, convert to WebP, upload to Supabase)
+    const publicUrl = await processAndUploadImage(currentFile.value);
+
+    // Create CSS url() syntax for background image
+    const backgroundValue = `url(${publicUrl})`;
+    emit('select', backgroundValue);
+    emit('close');
+
+    // Clear state
+    removeImage();
+  } catch (error: any) {
+    console.error('Failed to upload image:', error);
+    alert(error.message || 'Failed to upload image. Please try again.');
+  } finally {
+    isUploading.value = false;
+  }
+};
+
+const removeBackgroundImage = () => {
+  emit('select', customColor.value);
   emit('close');
 };
 </script>
@@ -176,6 +314,155 @@ const selectColor = (value: string) => {
 }
 
 .apply-button:active {
+  transform: scale(0.98);
+}
+
+.tab-switcher {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab-button:hover {
+  color: #374151;
+}
+
+.tab-button.active {
+  background: white;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tab-content {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.image-upload-area {
+  margin-bottom: 16px;
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 32px 16px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.image-upload-area:hover {
+  border-color: #3b82f6;
+  background: #f9fafb;
+}
+
+.image-upload-area.is-dragging {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.file-input {
+  display: none;
+}
+
+.upload-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.upload-icon {
+  font-size: 48px;
+  color: #9ca3af;
+}
+
+.upload-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.upload-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.image-preview-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.remove-image-button {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  border: 2px solid white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.remove-image-button:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.remove-button {
+  width: 100%;
+  padding: 10px 20px;
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 8px;
+}
+
+.remove-button:hover {
+  background: #fef2f2;
+}
+
+.remove-button:active {
   transform: scale(0.98);
 }
 

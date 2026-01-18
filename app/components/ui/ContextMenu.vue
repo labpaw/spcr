@@ -26,6 +26,7 @@ interface Props {
 defineProps<Props>();
 defineEmits<{
   selectBackground: [];
+  selectBackgroundImage: [];
 }>();
 </script>
 

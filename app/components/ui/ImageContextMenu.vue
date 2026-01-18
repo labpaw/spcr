@@ -19,6 +19,11 @@
       />
       <span class="context-text">{{ isLocked ? 'Unlock' : 'Lock' }}</span>
     </div>
+    <div class="divider"></div>
+    <div class="context-menu-item delete-item" @click="$emit('delete')">
+      <Icon name="material-symbols:delete-outline" class="context-icon" />
+      <span class="context-text">Delete</span>
+    </div>
   </div>
 </template>
 
@@ -35,6 +40,7 @@ defineProps<Props>();
 defineEmits<{
   selectShape: [];
   toggleLock: [];
+  delete: [];
 }>();
 </script>
 
@@ -95,5 +101,23 @@ defineEmits<{
   flex: 1;
   text-align: left;
   white-space: nowrap;
+}
+
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+.delete-item {
+  color: #ef4444 !important;
+}
+
+.delete-item:hover {
+  background-color: #fee2e2 !important;
+}
+
+.delete-item .context-icon {
+  color: #ef4444;
 }
 </style>

@@ -4,7 +4,7 @@
     @click="handleCanvasClick"
     @contextmenu.prevent="handleContextMenu"
     ref="canvasRef"
-    :style="{ background: canvasBackground }"
+    :style="backgroundStyle"
   >
     <!-- Canvas Elements -->
     <div
@@ -84,6 +84,7 @@
       :is-locked="contextMenuElement?.type === 'image' ? (contextMenuElement as ImageElementType).locked : false"
       @select-shape="openShapeModal"
       @toggle-lock="handleToggleLock"
+      @delete="handleDeleteElement"
     />
 
     <!-- Shape Context Menu -->
@@ -91,6 +92,18 @@
       :visible="showContextMenu && contextMenuElement?.type === 'shape'"
       :position="contextMenuPosition"
       @add-cover-image="openCoverImageModal"
+      @delete="handleDeleteElement"
+    />
+
+    <!-- Element Context Menu (Text/Link) -->
+    <ElementContextMenu
+      :visible="
+        showContextMenu &&
+        contextMenuElement &&
+        (contextMenuElement.type === 'text' || contextMenuElement.type === 'link')
+      "
+      :position="contextMenuPosition"
+      @delete="handleDeleteElement"
     />
 
     <!-- Background Modal -->
@@ -149,6 +162,7 @@ import TypeSelector from '~/components/ui/TypeSelector.vue';
 import ContextMenu from '~/components/ui/ContextMenu.vue';
 import ImageContextMenu from '~/components/ui/ImageContextMenu.vue';
 import ShapeContextMenu from '~/components/ui/ShapeContextMenu.vue';
+import ElementContextMenu from '~/components/ui/ElementContextMenu.vue';
 import BackgroundModal from '~/components/ui/BackgroundModal.vue';
 import ShapeModal from '~/components/ui/ShapeModal.vue';
 import CoverImageModal from '~/components/ui/CoverImageModal.vue';
@@ -171,7 +185,7 @@ const showCoverImageModal = ref(false);
 
 // Composables
 const { elements, loadElements, saveElements, addElement, deleteElement } = useElements();
-const { canvasBackground, setBackground } = useBackground();
+const { canvasBackground, backgroundStyle, setBackground } = useBackground();
 const { dragState, startDrag, stopDrag } = useDrag(saveElements);
 const { startResize } = useResize(saveElements);
 
@@ -467,6 +481,17 @@ const handleToggleLock = () => {
     const img = contextMenuElement.value as ImageElementType;
     img.locked = !img.locked;
     saveElements();
+  }
+  showContextMenu.value = false;
+  contextMenuElement.value = null;
+};
+
+/**
+ * Handle delete element from context menu
+ */
+const handleDeleteElement = () => {
+  if (contextMenuElement.value) {
+    deleteElement(contextMenuElement.value.id);
   }
   showContextMenu.value = false;
   contextMenuElement.value = null;

@@ -10,6 +10,23 @@
       <div class="modal-body">
         <h3 class="modal-title">Cover Image</h3>
 
+        <!-- Upload Area -->
+        <div
+          class="upload-area"
+          :class="{ 'is-dragging': isDragging }"
+          @dragover.prevent="isDragging = true"
+          @dragleave="isDragging = false"
+          @drop.prevent="handleImageDrop"
+          @click="fileInput?.click()"
+        >
+          <input type="file" ref="fileInput" class="file-input" accept="image/*" @change="handleImageUpload" />
+          <Icon name="material-symbols:upload" class="upload-icon" />
+          <p class="upload-text">Click to upload or drag and drop</p>
+          <p class="upload-hint">JPG, PNG, GIF up to 10MB</p>
+        </div>
+
+        <div class="divider">or</div>
+
         <div class="input-wrapper">
           <input
             type="text"
@@ -21,7 +38,14 @@
         </div>
 
         <div class="button-row">
-          <button class="apply-button" @click="applyImage" :disabled="!imageUrl.trim()">Apply</button>
+          <button
+            class="apply-button"
+            @click="applyImage"
+            :disabled="(!imageUrl.trim() && !currentFile) || isUploading"
+          >
+            <span v-if="isUploading">Uploading...</span>
+            <span v-else>Apply</span>
+          </button>
           <button v-if="currentImage" class="remove-button" @click="removeImage">Remove</button>
         </div>
       </div>
@@ -31,6 +55,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { processAndUploadImage } from '~/utils/imageOptimizer';
 
 interface Props {
   visible: boolean;
@@ -45,20 +70,69 @@ const emit = defineEmits<{
 }>();
 
 const imageUrl = ref(props.currentImage || '');
+const fileInput = ref<HTMLInputElement | null>(null);
+const isDragging = ref(false);
+const isUploading = ref(false);
+const currentFile = ref<File | null>(null);
 
 watch(
   () => props.visible,
   (isVisible) => {
     if (isVisible) {
       imageUrl.value = props.currentImage || '';
+      currentFile.value = null;
     }
-  }
+  },
 );
 
-const applyImage = () => {
-  if (imageUrl.value.trim()) {
-    emit('apply', imageUrl.value.trim());
+const handleImageUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) {
+    processFile(file);
+  }
+};
+
+const handleImageDrop = (event: DragEvent) => {
+  isDragging.value = false;
+  const file = event.dataTransfer?.files?.[0];
+  if (file && file.type.startsWith('image/')) {
+    processFile(file);
+  }
+};
+
+const processFile = (file: File) => {
+  // Check file size (10MB limit)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('Image size must be less than 10MB');
+    return;
+  }
+
+  currentFile.value = file;
+  imageUrl.value = ''; // Clear URL input when file is selected
+};
+
+const applyImage = async () => {
+  try {
+    isUploading.value = true;
+
+    if (currentFile.value) {
+      // Process and upload file
+      const publicUrl = await processAndUploadImage(currentFile.value);
+      emit('apply', publicUrl);
+    } else if (imageUrl.value.trim()) {
+      // Use URL directly
+      emit('apply', imageUrl.value.trim());
+    }
+
     emit('close');
+    currentFile.value = null;
+    imageUrl.value = '';
+  } catch (error: any) {
+    console.error('Failed to upload image:', error);
+    alert(error.message || 'Failed to upload image. Please try again.');
+  } finally {
+    isUploading.value = false;
   }
 };
 
@@ -187,6 +261,74 @@ const removeImage = () => {
 
 .remove-button:hover {
   background: #fecaca;
+}
+
+.upload-area {
+  margin-bottom: 16px;
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 24px 16px;
+  transition: all 0.15s;
+  cursor: pointer;
+  text-align: center;
+}
+
+.upload-area:hover {
+  border-color: #3b82f6;
+  background: #f9fafb;
+}
+
+.upload-area.is-dragging {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.file-input {
+  display: none;
+}
+
+.upload-icon {
+  font-size: 40px;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.upload-text {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.upload-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.divider {
+  margin: 16px 0;
+  color: #9ca3af;
+  font-size: 13px;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
 }
 
 @keyframes fadeIn {

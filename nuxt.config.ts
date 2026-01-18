@@ -8,4 +8,10 @@ export default defineNuxtConfig({
     plugins: [tailwindcss()],
   },
   modules: ['@nuxt/fonts', '@nuxt/icon', '@nuxt/image', '@nuxt/test-utils'],
+  runtimeConfig: {
+    public: {
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseKey: process.env.SUPABASE_KEY,
+    },
+  },
 });
