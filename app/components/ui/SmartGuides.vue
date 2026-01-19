@@ -19,6 +19,18 @@
     >
       <span v-if="guide.label" class="guide-label">{{ guide.label }}</span>
     </div>
+
+    <!-- Spacing guides (equal distribution indicators) -->
+    <div
+      v-for="(guide, index) in spacingGuides"
+      :key="`s-${index}`"
+      class="spacing-indicator"
+      :style="getSpacingStyle(guide)"
+    >
+      <div class="spacing-line"></div>
+      <span class="spacing-label">{{ guide.label }}</span>
+      <div class="spacing-line"></div>
+    </div>
   </div>
 </template>
 
@@ -26,9 +38,12 @@
 import { computed } from 'vue';
 
 interface GuideLine {
-  type: 'horizontal' | 'vertical';
+  type: 'horizontal' | 'vertical' | 'spacing';
   position: number;
   label?: string;
+  start?: number;
+  end?: number;
+  axis?: 'x' | 'y';
 }
 
 interface Props {
@@ -39,6 +54,19 @@ const props = defineProps<Props>();
 
 const verticalGuides = computed(() => props.guides.filter((g) => g.type === 'vertical'));
 const horizontalGuides = computed(() => props.guides.filter((g) => g.type === 'horizontal'));
+const spacingGuides = computed(() => props.guides.filter((g) => g.type === 'spacing'));
+
+const getSpacingStyle = (guide: GuideLine) => {
+  if (guide.axis === 'x' && guide.start !== undefined && guide.end !== undefined) {
+    return {
+      left: `${guide.start}%`,
+      width: `${guide.end - guide.start}%`,
+      top: '50%',
+      transform: 'translateY(-50%)',
+    };
+  }
+  return {};
+};
 </script>
 
 <style scoped>
@@ -90,5 +118,31 @@ const horizontalGuides = computed(() => props.guides.filter((g) => g.type === 'h
   left: 50%;
   top: 4px;
   transform: translateX(-50%);
+}
+
+/* Spacing indicator styles */
+.spacing-indicator {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  gap: 4px;
+}
+
+.spacing-line {
+  flex: 1;
+  height: 1px;
+  background: #8b5cf6;
+}
+
+.spacing-label {
+  background: #8b5cf6;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 </style>
