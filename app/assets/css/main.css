@@ -2,3 +2,66 @@
 
 /* Ensure Nuxt UI component styles are included */
 @source "../../../node_modules/@nuxt/ui";
+
+/* ====================================
+   Context Menu Shared Styles
+   ==================================== */
+
+/* Context Menu Item - Base */
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 500;
+  color: #374151;
+  line-height: 1.4;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.context-menu-item:hover {
+  background-color: #f9fafb;
+}
+
+/* Context Menu Item - Icon */
+.context-menu-item .context-icon {
+  font-size: 20px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+/* Context Menu Item - Text */
+.context-menu-item .context-text {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Context Menu Item - Danger/Delete Variant */
+.context-menu-item.danger {
+  color: #ef4444;
+}
+
+.context-menu-item.danger:hover {
+  background-color: #fee2e2;
+}
+
+.context-menu-item.danger .context-icon {
+  color: #ef4444;
+}
+
+/* Context Menu Divider */
+.context-menu-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}

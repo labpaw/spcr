@@ -1,27 +1,27 @@
 <template>
-  <div v-if="visible" ref="menuRef" class="context-menu-wrapper" :style="adjustedPosition" @click.stop>
-    <div class="context-menu-item" @click="$emit('selectShape')">
+  <BaseContextMenu v-if="visible" :visible="visible" :position="position">
+    <button class="context-menu-item" @click="$emit('selectShape')">
       <Icon name="material-symbols:shapes" class="context-icon" />
       <span class="context-text">Shape</span>
-    </div>
-    <div class="context-menu-item" @click="$emit('toggleLock')">
+    </button>
+    <button class="context-menu-item" @click="$emit('toggleLock')">
       <Icon
         :name="isLocked ? 'material-symbols:lock-open-outline' : 'material-symbols:lock-outline'"
         class="context-icon"
       />
       <span class="context-text">{{ isLocked ? 'Unlock' : 'Lock' }}</span>
-    </div>
-    <div class="divider"></div>
-    <div class="context-menu-item delete-item" @click="$emit('delete')">
+    </button>
+    <div class="context-menu-divider" />
+    <button class="context-menu-item danger" @click="$emit('delete')">
       <Icon name="material-symbols:delete-outline" class="context-icon" />
       <span class="context-text">Delete</span>
-    </div>
-  </div>
+    </button>
+  </BaseContextMenu>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
 import type { Position } from '~/types';
+import BaseContextMenu from '~/components/ui/BaseContextMenu.vue';
 
 interface Props {
   visible: boolean;
@@ -29,127 +29,10 @@ interface Props {
   isLocked?: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 defineEmits<{
   selectShape: [];
   toggleLock: [];
   delete: [];
 }>();
-
-const menuRef = ref<HTMLDivElement | null>(null);
-const menuHeight = ref(0);
-const menuWidth = ref(0);
-
-const adjustedPosition = computed(() => {
-  const padding = 10;
-  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1000;
-  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
-
-  let x = props.position.x;
-  let y = props.position.y;
-
-  if (x + menuWidth.value + padding > viewportWidth) {
-    x = Math.max(padding, x - menuWidth.value);
-  }
-
-  if (y + menuHeight.value + padding > viewportHeight) {
-    y = Math.max(padding, y - menuHeight.value);
-  }
-
-  return {
-    left: `${x}px`,
-    top: `${y}px`,
-  };
-});
-
-watch(
-  () => props.visible,
-  async (visible) => {
-    if (visible) {
-      await nextTick();
-      if (menuRef.value) {
-        menuHeight.value = menuRef.value.offsetHeight;
-        menuWidth.value = menuRef.value.offsetWidth;
-      }
-    }
-  },
-);
 </script>
-
-<style scoped>
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.context-menu-wrapper {
-  position: absolute;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-  padding: 8px;
-  z-index: 1001;
-  animation: fade-in 0.15s ease-out;
-  min-width: 220px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.context-menu-item {
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-  padding: 14px 16px !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 8px !important;
-  cursor: pointer !important;
-  transition: background-color 0.15s ease !important;
-  width: 100% !important;
-  font-size: 15px !important;
-  font-weight: 500 !important;
-  color: #374151 !important;
-  line-height: 1.4 !important;
-  box-sizing: border-box !important;
-}
-
-.context-menu-item:hover {
-  background-color: #f9fafb;
-}
-
-.context-icon {
-  font-size: 20px;
-  color: #6b7280;
-  flex-shrink: 0;
-}
-
-.context-text {
-  flex: 1;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.divider {
-  height: 1px;
-  background: #e5e7eb;
-  margin: 4px 0;
-}
-
-.delete-item {
-  color: #ef4444 !important;
-}
-
-.delete-item:hover {
-  background-color: #fee2e2 !important;
-}
-
-.delete-item .context-icon {
-  color: #ef4444;
-}
-</style>

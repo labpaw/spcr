@@ -1,5 +1,13 @@
 <template>
-  <div class="spacer-canvas" @click="handleCanvasClick" @contextmenu.prevent="handleContextMenu" ref="canvasRef">
+  <div
+    class="spacer-canvas"
+    @mousedown="handleCanvasMouseDown"
+    @mousemove="handleCanvasMouseMove"
+    @mouseup="handleCanvasMouseUp"
+    @click="handleCanvasClick"
+    @contextmenu.prevent="handleContextMenu"
+    ref="canvasRef"
+  >
     <!-- Background Layer (separate so blur doesn't affect content) -->
     <div class="background-layer" :style="{ ...backgroundStyle, ...blurStyle }"></div>
 
@@ -10,7 +18,7 @@
       :class="[
         'group cursor-move select-none min-w-[100px]',
         { 'cursor-auto': editingId === element.id },
-        { 'element-selected': selectedElementId === element.id && editingId !== element.id },
+        { 'element-selected': isSelected(element.id) && editingId !== element.id },
       ]"
       :style="{
         left: `${element.x}%`,
@@ -20,7 +28,7 @@
       }"
       @mousedown.stop="handleMouseDown(element, $event)"
       @touchstart.stop="handleTouchStart(element, $event)"
-      @click.stop="handleElementClick(element)"
+      @click.stop="handleElementClick(element, $event)"
       @dblclick.stop="handleElementDblClick(element)"
       @contextmenu.prevent.stop="handleElementContextMenu(element, $event)"
     >
@@ -54,6 +62,9 @@
       <ShapeElement v-if="element.type === 'shape'" :element="element" @resize="handleShapeResize(element, $event)" />
     </div>
 
+    <!-- Selection Box -->
+    <SelectionBox :visible="isSelecting" :rect="normalizedRect" />
+
     <!-- Type Selector -->
     <TypeSelector
       :visible="showTypeSelector"
@@ -66,7 +77,11 @@
     <ContextMenu
       :visible="showContextMenu && !contextMenuElement"
       :position="contextMenuPosition"
+      :can-undo="canUndo"
+      :can-redo="canRedo"
       @select-background="openBackgroundModal"
+      @undo="handleContextMenuUndo"
+      @redo="handleContextMenuRedo"
     />
 
     <!-- Image Context Menu -->
@@ -157,6 +172,8 @@ import { useElements } from '~/composables/useElements';
 import { useBackground } from '~/composables/useBackground';
 import { useDrag } from '~/composables/useDrag';
 import { useResize } from '~/composables/useResize';
+import { useSelectionBox } from '~/composables/useSelectionBox';
+import { useHistory } from '~/composables/useHistory';
 import TextElement from '~/components/canvas/TextElement.vue';
 import LinkElement from '~/components/canvas/LinkElement.vue';
 import ImageElement from '~/components/canvas/ImageElement.vue';
@@ -172,13 +189,17 @@ import CoverImageModal from '~/components/ui/CoverImageModal.vue';
 import InfoPanel from '~/components/ui/InfoPanel.vue';
 import FloatingToolbar from '~/components/ui/FloatingToolbar.vue';
 import SmartGuides from '~/components/ui/SmartGuides.vue';
+import SelectionBox from '~/components/ui/SelectionBox.vue';
 import { useSmartGuides } from '~/composables/useSmartGuides';
 
 // Refs
 const canvasRef = ref<HTMLElement | null>(null);
 const infoPanelRef = ref<InstanceType<typeof InfoPanel> | null>(null);
 const editingId = ref<number | null>(null);
-const selectedElementId = ref<number | null>(null);
+
+// Selection box tracking
+const selectionStarted = ref(false);
+const didDragSelect = ref(false);
 
 // UI State
 const showTypeSelector = ref(false);
@@ -192,6 +213,7 @@ const showCoverImageModal = ref(false);
 
 // Composables
 const { elements, loadElements, saveElements, addElement, deleteElement } = useElements();
+const { canUndo, canRedo, pushState, recordState, undo, redo, initHistory } = useHistory();
 const {
   canvasBackground,
   backgroundBlur,
@@ -203,6 +225,19 @@ const {
   setBlurAmount,
 } = useBackground();
 const { activeGuides, calculateGuides, clearGuides } = useSmartGuides();
+const {
+  isSelecting,
+  normalizedRect,
+  selectedIds,
+  selectedArray,
+  startSelection,
+  updateSelection,
+  endSelection,
+  clearSelection,
+  toggleSelection,
+  selectSingle,
+  isSelected,
+} = useSelectionBox();
 const { dragState, startDrag, startTouchDrag, stopDrag } = useDrag({
   onDragEnd: () => {
     clearGuides();
@@ -215,11 +250,63 @@ const { dragState, startDrag, startTouchDrag, stopDrag } = useDrag({
 });
 const { startResize } = useResize(saveElements);
 
+/**
+ * Save elements with history tracking
+ */
+const saveWithHistory = () => {
+  saveElements();
+  pushState(elements.value);
+};
+
+/**
+ * Handle undo action
+ */
+const handleUndo = () => {
+  const previousState = undo();
+  if (previousState) {
+    elements.value.length = 0;
+    elements.value.push(...previousState);
+    saveElements();
+    clearSelection();
+  }
+};
+
+/**
+ * Handle redo action
+ */
+const handleRedo = () => {
+  const nextState = redo();
+  if (nextState) {
+    elements.value.length = 0;
+    elements.value.push(...nextState);
+    saveElements();
+    clearSelection();
+  }
+};
+
+/**
+ * Handle undo from context menu
+ */
+const handleContextMenuUndo = () => {
+  handleUndo();
+  showContextMenu.value = false;
+};
+
+/**
+ * Handle redo from context menu
+ */
+const handleContextMenuRedo = () => {
+  handleRedo();
+  showContextMenu.value = false;
+};
+
 // Lifecycle
 onMounted(() => {
   loadElements();
-
-  // Add keyboard listener for delete/backspace
+  // Initialize history with loaded elements
+  nextTick(() => {
+    initHistory(elements.value);
+  });
   window.addEventListener('keydown', handleKeyDown);
 });
 
@@ -231,28 +318,118 @@ onUnmounted(() => {
  * Handle keyboard events
  */
 const handleKeyDown = (e: KeyboardEvent) => {
-  // Don't delete if focus is on an input or textarea
   const activeElement = document.activeElement;
   const isInputFocused = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
 
   if (isInputFocused) return;
 
-  // Check for Backspace or Delete key
+  // Undo (Cmd/Ctrl + Z)
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault();
+    handleUndo();
+    return;
+  }
+
+  // Redo (Cmd/Ctrl + Shift + Z) or (Cmd/Ctrl + Y)
+  if ((e.metaKey || e.ctrlKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
+    e.preventDefault();
+    handleRedo();
+    return;
+  }
+
+  // Delete selected elements
   if (e.key === 'Backspace' || e.key === 'Delete') {
-    if (selectedElementId.value !== null) {
-      e.preventDefault(); // Prevent browser back navigation
-      deleteElement(selectedElementId.value);
-      selectedElementId.value = null;
+    if (selectedIds.value.size > 0) {
+      e.preventDefault();
+      // Record state BEFORE deleting
+      recordState(elements.value);
+      // Delete all selected elements
+      for (const id of selectedArray.value) {
+        deleteElement(id);
+      }
+      clearSelection();
+      saveElements();
     }
+  }
+
+  // Select all (Cmd/Ctrl + A)
+  if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+    e.preventDefault();
+    for (const el of elements.value) {
+      selectedIds.value.add(el.id);
+    }
+  }
+
+  // Escape to clear selection
+  if (e.key === 'Escape') {
+    clearSelection();
+    editingId.value = null;
   }
 };
 
 /**
- * Handle canvas click
+ * Handle canvas mouse down - start selection box
+ */
+const handleCanvasMouseDown = (e: MouseEvent) => {
+  // Only start selection if clicking directly on canvas (not on element)
+  if (e.target !== canvasRef.value && !(e.target as HTMLElement).classList.contains('background-layer')) {
+    return;
+  }
+
+  const rect = canvasRef.value?.getBoundingClientRect();
+  if (!rect) return;
+
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  selectionStarted.value = true;
+  didDragSelect.value = false;
+  startSelection(x, y, e.shiftKey);
+};
+
+/**
+ * Handle canvas mouse move - update selection box
+ */
+const handleCanvasMouseMove = (e: MouseEvent) => {
+  if (!selectionStarted.value) return;
+
+  const rect = canvasRef.value?.getBoundingClientRect();
+  if (!rect) return;
+
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  updateSelection(x, y);
+
+  // Check if we've dragged enough to consider it a selection
+  if (normalizedRect.value && (normalizedRect.value.width > 5 || normalizedRect.value.height > 5)) {
+    didDragSelect.value = true;
+  }
+};
+
+/**
+ * Handle canvas mouse up - end selection box
+ */
+const handleCanvasMouseUp = (e: MouseEvent) => {
+  if (!selectionStarted.value) return;
+
+  const rect = canvasRef.value?.getBoundingClientRect();
+  if (rect) {
+    endSelection(elements.value, rect);
+  }
+
+  selectionStarted.value = false;
+};
+
+/**
+ * Handle canvas click (for type selector - only if not drag-selecting)
  */
 const handleCanvasClick = (e: MouseEvent) => {
-  // Clear selected element when clicking on canvas
-  selectedElementId.value = null;
+  // If we did a drag selection, don't open type selector
+  if (didDragSelect.value) {
+    didDragSelect.value = false;
+    return;
+  }
 
   // Close context menu if open
   if (showContextMenu.value) {
@@ -284,6 +461,9 @@ const handleCanvasClick = (e: MouseEvent) => {
     return;
   }
 
+  // Clear selection when clicking on empty canvas
+  clearSelection();
+
   // Get click position relative to canvas
   const rect = canvasRef.value?.getBoundingClientRect();
   if (!rect) return;
@@ -299,15 +479,13 @@ const handleCanvasClick = (e: MouseEvent) => {
  * Handle context menu (right-click on canvas)
  */
 const handleContextMenu = (e: MouseEvent) => {
-  // Close other menus
   showTypeSelector.value = false;
   showBgModal.value = false;
-  contextMenuElement.value = null; // Clear element context
+  contextMenuElement.value = null;
   if (infoPanelRef.value?.isOpen) {
     infoPanelRef.value.togglePanel();
   }
 
-  // Get click position relative to canvas
   const rect = canvasRef.value?.getBoundingClientRect();
   if (!rect) return;
 
@@ -322,15 +500,13 @@ const handleContextMenu = (e: MouseEvent) => {
  * Handle context menu on element (right-click on element)
  */
 const handleElementContextMenu = (element: SpacerElement, e: MouseEvent) => {
-  // Close other menus
   showTypeSelector.value = false;
   showBgModal.value = false;
-  contextMenuElement.value = element; // Store which element was right-clicked
+  contextMenuElement.value = element;
   if (infoPanelRef.value?.isOpen) {
     infoPanelRef.value.togglePanel();
   }
 
-  // Get click position relative to canvas
   const rect = canvasRef.value?.getBoundingClientRect();
   if (!rect) return;
 
@@ -345,7 +521,6 @@ const handleElementContextMenu = (element: SpacerElement, e: MouseEvent) => {
  * Handle adding new element
  */
 const handleAddElement = (type: ElementType) => {
-  // Convert pixel position to percentage
   const rect = canvasRef.value?.getBoundingClientRect();
   if (!rect) return;
 
@@ -357,7 +532,6 @@ const handleAddElement = (type: ElementType) => {
   const newElement = addElement(type, percentPosition);
   showTypeSelector.value = false;
 
-  // Start editing the new element
   nextTick(() => {
     startEdit(newElement);
   });
@@ -367,12 +541,10 @@ const handleAddElement = (type: ElementType) => {
  * Handle mouse down on element
  */
 const handleMouseDown = (element: SpacerElement, e: MouseEvent) => {
-  // Close any open menus
   showTypeSelector.value = false;
 
   if (editingId.value === element.id) return;
 
-  // Don't allow dragging locked elements
   if (element.type === 'image' && (element as ImageElementType).locked) {
     return;
   }
@@ -384,12 +556,10 @@ const handleMouseDown = (element: SpacerElement, e: MouseEvent) => {
  * Handle touch start on element (mobile)
  */
 const handleTouchStart = (element: SpacerElement, e: TouchEvent) => {
-  // Close any open menus
   showTypeSelector.value = false;
 
   if (editingId.value === element.id) return;
 
-  // Don't allow dragging locked elements
   if (element.type === 'image' && (element as ImageElementType).locked) {
     return;
   }
@@ -400,14 +570,16 @@ const handleTouchStart = (element: SpacerElement, e: TouchEvent) => {
 /**
  * Handle element click (single-click to select)
  */
-const handleElementClick = (element: SpacerElement) => {
+const handleElementClick = (element: SpacerElement, e: MouseEvent) => {
   if (dragState.value.isDragging) return;
-
-  // If already editing this element, don't restart
   if (editingId.value === element.id) return;
 
-  // Just select the element (don't start editing)
-  selectedElementId.value = element.id;
+  // Shift+click for multi-select
+  if (e.shiftKey) {
+    toggleSelection(element.id, true);
+  } else {
+    selectSingle(element.id);
+  }
   editingId.value = null;
 };
 
@@ -417,8 +589,7 @@ const handleElementClick = (element: SpacerElement) => {
 const handleElementDblClick = (element: SpacerElement) => {
   if (dragState.value.isDragging) return;
 
-  // Select and start editing
-  selectedElementId.value = element.id;
+  selectSingle(element.id);
   startEdit(element);
 };
 
@@ -428,7 +599,7 @@ const handleElementDblClick = (element: SpacerElement) => {
 const startEdit = (element: SpacerElement) => {
   if (dragState.value.isDragging) return;
   editingId.value = element.id;
-  selectedElementId.value = element.id;
+  selectSingle(element.id);
 };
 
 /**
@@ -436,7 +607,6 @@ const startEdit = (element: SpacerElement) => {
  */
 const stopEdit = () => {
   editingId.value = null;
-  // Keep element selected after stopping edit
   saveElements();
 };
 
@@ -489,7 +659,6 @@ const handleShapeSelect = (borderRadius: number) => {
  * Handle adding a shape element
  */
 const handleAddShape = (shapeType: ShapeType) => {
-  // Convert pixel position to percentage
   const rect = canvasRef.value?.getBoundingClientRect();
   if (!rect) return;
 
@@ -593,7 +762,10 @@ const handleEditElement = () => {
  */
 const handleDeleteElement = () => {
   if (contextMenuElement.value) {
+    // Record state BEFORE deleting
+    recordState(elements.value);
     deleteElement(contextMenuElement.value.id);
+    saveElements();
   }
   showContextMenu.value = false;
   contextMenuElement.value = null;
@@ -605,30 +777,33 @@ const handleDeleteElement = () => {
 type AlignmentType = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
 
 const handleAlign = (alignment: AlignmentType) => {
-  if (selectedElementId.value === null) return;
+  if (selectedIds.value.size === 0) return;
 
-  const element = elements.value.find((el) => el.id === selectedElementId.value);
-  if (!element) return;
+  // Align all selected elements
+  for (const id of selectedArray.value) {
+    const element = elements.value.find((el) => el.id === id);
+    if (!element) continue;
 
-  switch (alignment) {
-    case 'left':
-      element.x = 5; // 5% from left edge
-      break;
-    case 'center':
-      element.x = 50; // Centered horizontally
-      break;
-    case 'right':
-      element.x = 95; // 5% from right edge
-      break;
-    case 'top':
-      element.y = 5; // 5% from top
-      break;
-    case 'middle':
-      element.y = 50; // Centered vertically
-      break;
-    case 'bottom':
-      element.y = 95; // 5% from bottom
-      break;
+    switch (alignment) {
+      case 'left':
+        element.x = 5;
+        break;
+      case 'center':
+        element.x = 50;
+        break;
+      case 'right':
+        element.x = 95;
+        break;
+      case 'top':
+        element.y = 5;
+        break;
+      case 'middle':
+        element.y = 50;
+        break;
+      case 'bottom':
+        element.y = 95;
+        break;
+    }
   }
 
   saveElements();
@@ -656,7 +831,7 @@ const handleAlign = (alignment: AlignmentType) => {
 
 /* Selected element indicator - shadcn style */
 .element-selected {
-  outline: 1.5px dashed rgba(0, 0, 0, 0.3);
+  outline: 1.5px dashed rgba(59, 130, 246, 0.5);
   outline-offset: 6px;
   border-radius: 6px;
 }
