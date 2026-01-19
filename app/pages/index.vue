@@ -94,6 +94,7 @@
         (contextMenuElement.type === 'text' || contextMenuElement.type === 'link')
       "
       :position="contextMenuPosition"
+      @edit="handleEditElement"
       @delete="handleDeleteElement"
     />
 
@@ -555,6 +556,16 @@ const handleToggleLock = () => {
   }
   showContextMenu.value = false;
   contextMenuElement.value = null;
+};
+
+/**
+ * Handle edit element from context menu
+ */
+const handleEditElement = () => {
+  if (contextMenuElement.value) {
+    startEdit(contextMenuElement.value);
+  }
+  showContextMenu.value = false;
 };
 
 /**

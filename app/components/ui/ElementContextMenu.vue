@@ -8,6 +8,11 @@
     }"
     @click.stop
   >
+    <div class="context-menu-item" @click="$emit('edit')">
+      <Icon name="material-symbols:edit-outline" class="context-icon" />
+      <span class="context-text">Edit</span>
+    </div>
+    <div class="context-divider"></div>
     <div class="context-menu-item delete-item" @click="$emit('delete')">
       <Icon name="material-symbols:delete-outline" class="context-icon" />
       <span class="context-text">Delete</span>
@@ -25,6 +30,7 @@ interface Props {
 
 defineProps<Props>();
 defineEmits<{
+  edit: [];
   delete: [];
 }>();
 </script>
@@ -98,5 +104,11 @@ defineEmits<{
 
 .delete-item .context-icon {
   color: #ef4444;
+}
+
+.context-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 8px;
 }
 </style>
