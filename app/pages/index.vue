@@ -132,6 +132,9 @@
 
     <!-- Info Panel -->
     <InfoPanel ref="infoPanelRef" />
+
+    <!-- Floating Toolbar -->
+    <FloatingToolbar />
   </div>
 </template>
 
