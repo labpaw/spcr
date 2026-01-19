@@ -166,6 +166,7 @@ import BackgroundModal from '~/components/ui/BackgroundModal.vue';
 import ShapeModal from '~/components/ui/ShapeModal.vue';
 import CoverImageModal from '~/components/ui/CoverImageModal.vue';
 import InfoPanel from '~/components/ui/InfoPanel.vue';
+import FloatingToolbar from '~/components/ui/FloatingToolbar.vue';
 
 // Refs
 const canvasRef = ref<HTMLElement | null>(null);
