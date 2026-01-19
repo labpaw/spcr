@@ -24,12 +24,16 @@
 
       <input type="number" v-model.number="element.fontSize" min="8" max="200" class="size-input" title="Font size" />
 
-      <UPopover>
-        <button class="color-btn" title="Text color">
-          <div class="color-circle" :style="{ background: element.fontColor || '#000000' }"></div>
-        </button>
+      <UPopover :popper="{ placement: 'bottom' }">
+        <template #default="{ open }">
+          <button class="color-btn" title="Text color" type="button">
+            <div class="color-circle" :style="{ background: element.fontColor || '#000000' }"></div>
+          </button>
+        </template>
         <template #content>
-          <UColorPicker v-model="element.fontColor" format="hex" size="sm" class="p-2" />
+          <div class="p-2">
+            <UColorPicker v-model="element.fontColor" format="hex" size="sm" />
+          </div>
         </template>
       </UPopover>
 
