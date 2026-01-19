@@ -30,6 +30,17 @@
         </button>
         <div v-show="showColorPicker" class="color-picker-popup" @click.stop>
           <UColorPicker v-model="localColor" />
+          <div class="hex-input-row">
+            <span class="hex-label">#</span>
+            <input
+              type="text"
+              :value="localColor?.replace('#', '')"
+              @input="handleHexInput"
+              class="hex-input"
+              maxlength="6"
+              placeholder="000000"
+            />
+          </div>
         </div>
       </div>
 
@@ -92,6 +103,16 @@ watch(
 watch(localColor, (newColor) => {
   props.element.fontColor = newColor;
 });
+
+// Handle hex input
+const handleHexInput = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  let value = input.value.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
+  if (value.length > 6) value = value.substring(0, 6);
+  if (value.length === 6 || value.length === 3) {
+    localColor.value = '#' + value;
+  }
+};
 
 // Font weights for quick selection
 const fontWeights = [
@@ -321,6 +342,44 @@ watch(
 
 .color-picker-popup :deep(.track) {
   min-height: 160px !important;
+}
+
+/* Hex Input Row */
+.hex-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.hex-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+}
+
+.hex-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  color: #111827;
+  text-transform: uppercase;
+  outline: none;
+  width: 70px;
+  letter-spacing: 0.5px;
+}
+
+.hex-input::placeholder {
+  color: #9ca3af;
+  text-transform: uppercase;
 }
 
 /* More Options */
