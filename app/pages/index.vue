@@ -130,6 +130,9 @@
       @remove="handleCoverImageRemove"
     />
 
+    <!-- Smart Guides -->
+    <SmartGuides :guides="activeGuides" />
+
     <!-- Info Panel -->
     <InfoPanel ref="infoPanelRef" />
   </div>
@@ -167,6 +170,8 @@ import ShapeModal from '~/components/ui/ShapeModal.vue';
 import CoverImageModal from '~/components/ui/CoverImageModal.vue';
 import InfoPanel from '~/components/ui/InfoPanel.vue';
 import FloatingToolbar from '~/components/ui/FloatingToolbar.vue';
+import SmartGuides from '~/components/ui/SmartGuides.vue';
+import { useSmartGuides } from '~/composables/useSmartGuides';
 
 // Refs
 const canvasRef = ref<HTMLElement | null>(null);
@@ -196,7 +201,17 @@ const {
   setBlur,
   setBlurAmount,
 } = useBackground();
-const { dragState, startDrag, startTouchDrag, stopDrag } = useDrag(saveElements);
+const { activeGuides, calculateGuides, clearGuides } = useSmartGuides();
+const { dragState, startDrag, startTouchDrag, stopDrag } = useDrag({
+  onDragEnd: () => {
+    clearGuides();
+    saveElements();
+  },
+  onDragMove: (element, x, y) => {
+    const result = calculateGuides(element, elements.value, x, y);
+    return { snapX: result.snapX ?? undefined, snapY: result.snapY ?? undefined };
+  },
+});
 const { startResize } = useResize(saveElements);
 
 // Lifecycle

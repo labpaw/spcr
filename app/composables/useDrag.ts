@@ -2,12 +2,22 @@
  * Composable for handling drag functionality
  * Uses percentage-based positioning for responsive layouts
  * Supports both mouse and touch events
+ * Supports smart guides with snap functionality
  */
 
 import { ref } from 'vue';
 import type { SpacerElement, DragState } from '~/types';
 
-export const useDrag = (onDragEnd?: () => void) => {
+interface DragCallbacks {
+  onDragEnd?: () => void;
+  onDragMove?: (element: SpacerElement, x: number, y: number) => { snapX?: number; snapY?: number } | void;
+}
+
+export const useDrag = (callbacks?: DragCallbacks | (() => void)) => {
+  // Support both old and new callback format
+  const onDragEnd = typeof callbacks === 'function' ? callbacks : callbacks?.onDragEnd;
+  const onDragMove = typeof callbacks === 'function' ? undefined : callbacks?.onDragMove;
+
   const dragState = ref<DragState>({
     isDragging: false,
     element: null,
@@ -85,9 +95,22 @@ export const useDrag = (onDragEnd?: () => void) => {
     const dxPercent = (dx / window.innerWidth) * 100;
     const dyPercent = (dy / window.innerHeight) * 100;
 
+    // Calculate new position
+    let newX = dragState.value.elementStartX + dxPercent;
+    let newY = dragState.value.elementStartY + dyPercent;
+
+    // Call onDragMove callback for smart guides
+    if (onDragMove) {
+      const snapResult = onDragMove(dragState.value.element, newX, newY);
+      if (snapResult) {
+        if (snapResult.snapX !== undefined) newX = snapResult.snapX;
+        if (snapResult.snapY !== undefined) newY = snapResult.snapY;
+      }
+    }
+
     // Update element position (as percentage)
-    dragState.value.element.x = dragState.value.elementStartX + dxPercent;
-    dragState.value.element.y = dragState.value.elementStartY + dyPercent;
+    dragState.value.element.x = newX;
+    dragState.value.element.y = newY;
   };
 
   /**
