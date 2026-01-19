@@ -204,7 +204,7 @@ watch(
   border: 2px dashed rgba(59, 130, 246, 0.4);
   border-radius: 8px;
   background: transparent;
-  resize: both;
+  resize: none;
   min-width: 200px;
   min-height: 60px;
   outline: none;
@@ -227,6 +227,7 @@ watch(
     0 2px 8px rgba(0, 0, 0, 0.1),
     0 0 0 1px rgba(0, 0, 0, 0.05);
   width: fit-content;
+  align-self: center;
 }
 
 /* Tool Button */
