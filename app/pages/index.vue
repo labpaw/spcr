@@ -7,7 +7,11 @@
     <div
       v-for="element in elements"
       :key="element.id"
-      :class="['group cursor-move select-none min-w-[100px]', { 'cursor-auto': editingId === element.id }]"
+      :class="[
+        'group cursor-move select-none min-w-[100px]',
+        { 'cursor-auto': editingId === element.id },
+        { 'element-selected': selectedElementId === element.id && editingId !== element.id },
+      ]"
       :style="{
         left: `${element.x}%`,
         top: `${element.y}%`,
@@ -581,6 +585,25 @@ const handleDeleteElement = () => {
   right: 0;
   bottom: 0;
   z-index: 0;
+  pointer-events: none;
+}
+
+/* Selected element indicator */
+.element-selected {
+  outline: 2px solid #3b82f6;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.element-selected::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border: 2px dashed rgba(59, 130, 246, 0.4);
+  border-radius: 8px;
   pointer-events: none;
 }
 </style>
