@@ -162,13 +162,18 @@ watch(
 
 .text-input {
   padding: 8px;
-  border: none;
+  border: 2px dashed rgba(59, 130, 246, 0.4);
   border-radius: 8px;
   background: transparent;
   resize: both;
   min-width: 200px;
   min-height: 60px;
   outline: none;
+  transition: border-color 0.2s;
+}
+
+.text-input:focus {
+  border-color: rgba(59, 130, 246, 0.6);
 }
 
 /* Minimalist Toolbar */

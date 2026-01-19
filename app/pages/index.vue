@@ -49,15 +49,6 @@
 
       <!-- Shape Element -->
       <ShapeElement v-if="element.type === 'shape'" :element="element" @resize="handleShapeResize(element, $event)" />
-
-      <!-- Delete button -->
-      <button
-        class="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-red-500 text-white border-2 border-white text-xl leading-none cursor-pointer opacity-0 transition-all duration-200 flex items-center justify-center shadow-md group-hover:opacity-100 hover:bg-red-600 hover:scale-110"
-        @click.stop="deleteElement(element.id)"
-        title="Delete"
-      >
-        ×
-      </button>
     </div>
 
     <!-- Type Selector -->
