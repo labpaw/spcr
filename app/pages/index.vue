@@ -130,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import type {
   SpacerElement,
   Position,
@@ -205,12 +205,16 @@ onUnmounted(() => {
  * Handle keyboard events
  */
 const handleKeyDown = (e: KeyboardEvent) => {
-  // Don't delete if editing text
-  if (editingId.value !== null) return;
+  // Don't delete if focus is on an input or textarea
+  const activeElement = document.activeElement;
+  const isInputFocused = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
+
+  if (isInputFocused) return;
 
   // Check for Backspace or Delete key
   if (e.key === 'Backspace' || e.key === 'Delete') {
     if (selectedElementId.value !== null) {
+      e.preventDefault(); // Prevent browser back navigation
       deleteElement(selectedElementId.value);
       selectedElementId.value = null;
     }
