@@ -1,48 +1,33 @@
 <template>
   <div
     v-if="visible"
-    class="absolute bg-white rounded-xl shadow-xl p-2 flex flex-col gap-1 z-[1000] animate-fade-in"
+    class="menu-container"
     :style="{
       left: `${position.x}px`,
       top: `${position.y}px`,
     }"
     @click.stop
   >
-    <button
-      @click="$emit('select', 'text')"
-      class="px-5 py-3 bg-white border border-gray-200 rounded-lg cursor-pointer text-sm flex items-center gap-2 transition-all whitespace-nowrap font-medium hover:bg-gray-50 hover:border-blue-500 hover:text-blue-500"
-    >
-      <Icon name="material-symbols:text-fields" />
-      Text
+    <button @click="$emit('select', 'text')" class="menu-button">
+      <Icon name="material-symbols:text-fields" class="menu-icon" />
+      <span>Text</span>
     </button>
-    <button
-      @click="$emit('select', 'link')"
-      class="px-5 py-3 bg-white border border-gray-200 rounded-lg cursor-pointer text-sm flex items-center gap-2 transition-all whitespace-nowrap font-medium hover:bg-gray-50 hover:border-blue-500 hover:text-blue-500"
-    >
-      <Icon name="material-symbols:link" />
-      Link
+    <button @click="$emit('select', 'link')" class="menu-button">
+      <Icon name="material-symbols:link" class="menu-icon" />
+      <span>Link</span>
     </button>
-    <button
-      @click="$emit('select', 'image')"
-      class="px-5 py-3 bg-white border border-gray-200 rounded-lg cursor-pointer text-sm flex items-center gap-2 transition-all whitespace-nowrap font-medium hover:bg-gray-50 hover:border-blue-500 hover:text-blue-500"
-    >
-      <Icon name="material-symbols:image-outline" />
-      Image
+    <button @click="$emit('select', 'image')" class="menu-button">
+      <Icon name="material-symbols:image-outline" class="menu-icon" />
+      <span>Image</span>
     </button>
-    <div class="h-px bg-gray-200 my-1"></div>
-    <button
-      @click="$emit('selectShape', 'circle')"
-      class="px-5 py-3 bg-white border border-gray-200 rounded-lg cursor-pointer text-sm flex items-center gap-2 transition-all whitespace-nowrap font-medium hover:bg-gray-50 hover:border-blue-500 hover:text-blue-500"
-    >
-      <Icon name="material-symbols:circle-outline" />
-      Circle
+    <div class="menu-divider"></div>
+    <button @click="$emit('selectShape', 'circle')" class="menu-button">
+      <Icon name="material-symbols:circle-outline" class="menu-icon" />
+      <span>Circle</span>
     </button>
-    <button
-      @click="$emit('selectShape', 'square')"
-      class="px-5 py-3 bg-white border border-gray-200 rounded-lg cursor-pointer text-sm flex items-center gap-2 transition-all whitespace-nowrap font-medium hover:bg-gray-50 hover:border-blue-500 hover:text-blue-500"
-    >
-      <Icon name="material-symbols:square-outline" />
-      Square
+    <button @click="$emit('selectShape', 'square')" class="menu-button">
+      <Icon name="material-symbols:square-outline" class="menu-icon" />
+      <span>Square</span>
     </button>
   </div>
 </template>
@@ -66,7 +51,7 @@ defineEmits<{
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
@@ -74,31 +59,60 @@ defineEmits<{
   }
 }
 
-.animate-fade-in {
+.menu-container {
+  position: absolute;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1000;
   animation: fade-in 0.15s ease-out;
+  min-width: 140px;
 }
 
-button {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  padding: 12px 20px !important;
-  margin: 0 !important;
-  background: white !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 8px !important;
-  cursor: pointer !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  color: #374151 !important;
-  transition: all 0.15s ease !important;
-  white-space: nowrap !important;
-  box-sizing: border-box !important;
+.menu-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-align: left;
+  width: 100%;
 }
 
-button:hover {
-  background: #f9fafb !important;
-  border-color: #3b82f6 !important;
-  color: #3b82f6 !important;
+.menu-button:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.menu-button:active {
+  transform: scale(0.98);
+}
+
+.menu-icon {
+  font-size: 18px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.menu-button:hover .menu-icon {
+  color: #3b82f6;
+}
+
+.menu-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
 }
 </style>
