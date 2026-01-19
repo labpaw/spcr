@@ -29,12 +29,7 @@
           <div class="color-circle" :style="{ background: element.fontColor || '#000000' }"></div>
         </button>
         <div v-show="showColorPicker" class="color-picker-popup" @click.stop>
-          <UColorPicker
-            v-model="element.fontColor"
-            :default-value="element.fontColor || '#000000'"
-            format="hex"
-            size="md"
-          />
+          <UColorPicker v-model="localColor" />
         </div>
       </div>
 
@@ -81,6 +76,22 @@ defineEmits<{
 const inputRef = ref<HTMLTextAreaElement | null>(null);
 const showMore = ref(false);
 const showColorPicker = ref(false);
+
+// Local color ref for color picker (ensures default value)
+const localColor = ref('#000000');
+
+// Sync local color with element
+watch(
+  () => props.element.fontColor,
+  (newColor) => {
+    if (newColor) localColor.value = newColor;
+  },
+  { immediate: true },
+);
+
+watch(localColor, (newColor) => {
+  props.element.fontColor = newColor;
+});
 
 // Font weights for quick selection
 const fontWeights = [
