@@ -588,22 +588,10 @@ const handleDeleteElement = () => {
   pointer-events: none;
 }
 
-/* Selected element indicator */
+/* Selected element indicator - shadcn style */
 .element-selected {
-  outline: 2px solid #3b82f6;
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-
-.element-selected::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  right: -8px;
-  bottom: -8px;
-  border: 2px dashed rgba(59, 130, 246, 0.4);
-  border-radius: 8px;
-  pointer-events: none;
+  outline: 1.5px dashed rgba(0, 0, 0, 0.3);
+  outline-offset: 6px;
+  border-radius: 6px;
 }
 </style>
