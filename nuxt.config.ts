@@ -46,6 +46,12 @@ export default defineNuxtConfig({
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'mobile-web-app-capable', content: 'yes' },
       ],
+      link: [
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=Lato:wght@300;400;700&family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Merriweather:wght@300;400;700&family=Source+Sans+3:wght@300;400;600;700&family=Nunito:wght@300;400;600;700&family=Raleway:wght@300;400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Dancing+Script:wght@400;500;600;700&family=Pacifico&family=Permanent+Marker&family=Bebas+Neue&family=Caveat:wght@400;500;600;700&family=Abril+Fatface&family=Lobster&family=Comfortaa:wght@300;400;500;600;700&family=Great+Vibes&family=Satisfy&family=Sacramento&family=Kalam:wght@300;400;700&family=Indie+Flower&family=Righteous&family=Fredoka:wght@400;500;600;700&family=Bangers&family=Press+Start+2P&family=Fira+Code:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap',
+        },
+      ],
     },
   },
 });

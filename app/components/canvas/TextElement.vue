@@ -175,28 +175,44 @@ const fontWeights = [
   { value: 700, label: 'Bold', short: 'B' },
 ];
 
-// Available Google Fonts
+// Available Google Fonts - organized by category
 const availableFonts = [
+  // Sans-Serif (Clean, Modern)
   'Inter',
   'Roboto',
   'Open Sans',
   'Montserrat',
   'Lato',
   'Poppins',
-  'Playfair Display',
-  'Merriweather',
-  'Source Sans Pro',
   'Nunito',
   'Raleway',
+  'Comfortaa',
+  // Serif (Classic, Elegant)
+  'Playfair Display',
+  'Merriweather',
+  'Source Sans 3',
+  'Abril Fatface',
+  // Display/Decorative
   'Oswald',
+  'Bebas Neue',
+  'Righteous',
+  'Fredoka',
+  'Bangers',
+  'Press Start 2P',
+  // Handwriting/Cursive
   'Dancing Script',
   'Pacifico',
-  'Permanent Marker',
-  'Bebas Neue',
   'Caveat',
-  'Abril Fatface',
   'Lobster',
-  'Comfortaa',
+  'Permanent Marker',
+  'Great Vibes',
+  'Satisfy',
+  'Sacramento',
+  'Kalam',
+  'Indie Flower',
+  // Monospace
+  'Fira Code',
+  'Space Mono',
 ];
 
 // Computed text styles
