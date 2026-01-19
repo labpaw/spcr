@@ -67,7 +67,7 @@ defineEmits<{
   transform: translateY(-50%);
   display: flex;
   align-items: center;
-  z-index: 100;
+  z-index: 9999;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -79,15 +79,15 @@ defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 48px;
+  width: 28px;
+  height: 56px;
   background: white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d1d5db;
   border-right: none;
-  border-radius: 8px 0 0 8px;
+  border-radius: 10px 0 0 10px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-btn:hover {
