@@ -155,7 +155,7 @@ watch(
 
 .text-input {
   padding: 8px;
-  border: 2px solid #3b82f6;
+  border: none;
   border-radius: 8px;
   background: transparent;
   resize: both;
