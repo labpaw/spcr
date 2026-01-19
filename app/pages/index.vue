@@ -132,10 +132,10 @@
 
     <!-- Info Panel -->
     <InfoPanel ref="infoPanelRef" />
-
-    <!-- Floating Toolbar -->
-    <FloatingToolbar @align="handleAlign" />
   </div>
+
+  <!-- Floating Toolbar (outside canvas for proper positioning) -->
+  <FloatingToolbar @align="handleAlign" />
 </template>
 
 <script setup lang="ts">
