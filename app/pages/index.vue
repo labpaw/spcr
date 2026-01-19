@@ -162,6 +162,7 @@ import InfoPanel from '~/components/ui/InfoPanel.vue';
 const canvasRef = ref<HTMLElement | null>(null);
 const infoPanelRef = ref<InstanceType<typeof InfoPanel> | null>(null);
 const editingId = ref<number | null>(null);
+const selectedElementId = ref<number | null>(null);
 
 // UI State
 const showTypeSelector = ref(false);
@@ -191,12 +192,38 @@ const { startResize } = useResize(saveElements);
 // Lifecycle
 onMounted(() => {
   loadElements();
+
+  // Add keyboard listener for delete/backspace
+  window.addEventListener('keydown', handleKeyDown);
 });
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
+/**
+ * Handle keyboard events
+ */
+const handleKeyDown = (e: KeyboardEvent) => {
+  // Don't delete if editing text
+  if (editingId.value !== null) return;
+
+  // Check for Backspace or Delete key
+  if (e.key === 'Backspace' || e.key === 'Delete') {
+    if (selectedElementId.value !== null) {
+      deleteElement(selectedElementId.value);
+      selectedElementId.value = null;
+    }
+  }
+};
 
 /**
  * Handle canvas click
  */
 const handleCanvasClick = (e: MouseEvent) => {
+  // Clear selected element when clicking on canvas
+  selectedElementId.value = null;
+
   // Close context menu if open
   if (showContextMenu.value) {
     showContextMenu.value = false;
@@ -345,6 +372,10 @@ const handleTouchStart = (element: SpacerElement, e: TouchEvent) => {
  */
 const handleElementClick = (element: SpacerElement) => {
   if (dragState.value.isDragging) return;
+
+  // Select the element
+  selectedElementId.value = element.id;
+
   startEdit(element);
 };
 
@@ -354,6 +385,7 @@ const handleElementClick = (element: SpacerElement) => {
 const startEdit = (element: SpacerElement) => {
   if (dragState.value.isDragging) return;
   editingId.value = element.id;
+  selectedElementId.value = element.id;
 };
 
 /**
@@ -361,6 +393,7 @@ const startEdit = (element: SpacerElement) => {
  */
 const stopEdit = () => {
   editingId.value = null;
+  // Keep element selected after stopping edit
   saveElements();
 };
 
