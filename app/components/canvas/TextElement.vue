@@ -227,8 +227,24 @@ watch(
       nextTick(() => {
         inputRef.value?.focus();
         inputRef.value?.select();
+        autoResize();
       });
     }
+  },
+);
+
+// Auto-resize textarea based on content
+const autoResize = () => {
+  if (!inputRef.value) return;
+  inputRef.value.style.height = 'auto';
+  inputRef.value.style.height = inputRef.value.scrollHeight + 'px';
+};
+
+// Watch for content changes to auto-resize
+watch(
+  () => props.element.content,
+  () => {
+    nextTick(() => autoResize());
   },
 );
 </script>
@@ -269,6 +285,7 @@ watch(
   transition: border-color 0.2s;
   width: 100%;
   height: 100%;
+  overflow: hidden;
 }
 
 .text-input:focus {
