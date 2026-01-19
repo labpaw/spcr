@@ -31,6 +31,7 @@ export interface LinkElement extends BaseElement {
   type: 'link';
   content: string;
   url: string;
+  icon?: string; // Icon URL/data URL
 }
 
 export interface ImageElement extends BaseElement {
