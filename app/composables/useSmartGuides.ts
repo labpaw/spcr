@@ -7,7 +7,7 @@ interface GuideLine {
   label?: string;
 }
 
-const SNAP_THRESHOLD = 2; // Percentage threshold for snapping
+const SNAP_THRESHOLD = 3; // Percentage threshold for snapping (increased for better detection)
 
 export const useSmartGuides = () => {
   const activeGuides = ref<GuideLine[]>([]);
@@ -33,45 +33,45 @@ export const useSmartGuides = () => {
     // Get other elements (not the dragged one)
     const otherElements = allElements.filter((el) => el.id !== draggedElement.id);
 
-    // Canvas center guides (50%)
-    if (Math.abs(currentX - 50) < SNAP_THRESHOLD) {
+    // Check alignment with other elements FIRST (higher priority)
+    for (const element of otherElements) {
+      // Vertical alignment (same X) - for centering elements horizontally
+      if (Math.abs(currentX - element.x) < SNAP_THRESHOLD && snapX === null) {
+        guides.push({ type: 'vertical', position: element.x, label: 'Align' });
+        snapX = element.x;
+      }
+
+      // Horizontal alignment (same Y) - for aligning elements vertically
+      if (Math.abs(currentY - element.y) < SNAP_THRESHOLD && snapY === null) {
+        guides.push({ type: 'horizontal', position: element.y, label: 'Align' });
+        snapY = element.y;
+      }
+    }
+
+    // Canvas center guides (50%) - only if not already snapping to element
+    if (snapX === null && Math.abs(currentX - 50) < SNAP_THRESHOLD) {
       guides.push({ type: 'vertical', position: 50, label: 'Center' });
       snapX = 50;
     }
-    if (Math.abs(currentY - 50) < SNAP_THRESHOLD) {
+    if (snapY === null && Math.abs(currentY - 50) < SNAP_THRESHOLD) {
       guides.push({ type: 'horizontal', position: 50, label: 'Middle' });
       snapY = 50;
     }
 
-    // Check alignment with other elements
-    for (const element of otherElements) {
-      // Horizontal alignment (same Y)
-      if (Math.abs(currentY - element.y) < SNAP_THRESHOLD) {
-        guides.push({ type: 'horizontal', position: element.y });
-        snapY = element.y;
-      }
-
-      // Vertical alignment (same X)
-      if (Math.abs(currentX - element.x) < SNAP_THRESHOLD) {
-        guides.push({ type: 'vertical', position: element.x });
-        snapX = element.x;
-      }
-    }
-
     // Edge guides (5% and 95%)
-    if (Math.abs(currentX - 5) < SNAP_THRESHOLD) {
+    if (snapX === null && Math.abs(currentX - 5) < SNAP_THRESHOLD) {
       guides.push({ type: 'vertical', position: 5, label: 'Left' });
       snapX = 5;
     }
-    if (Math.abs(currentX - 95) < SNAP_THRESHOLD) {
+    if (snapX === null && Math.abs(currentX - 95) < SNAP_THRESHOLD) {
       guides.push({ type: 'vertical', position: 95, label: 'Right' });
       snapX = 95;
     }
-    if (Math.abs(currentY - 5) < SNAP_THRESHOLD) {
+    if (snapY === null && Math.abs(currentY - 5) < SNAP_THRESHOLD) {
       guides.push({ type: 'horizontal', position: 5, label: 'Top' });
       snapY = 5;
     }
-    if (Math.abs(currentY - 95) < SNAP_THRESHOLD) {
+    if (snapY === null && Math.abs(currentY - 95) < SNAP_THRESHOLD) {
       guides.push({ type: 'horizontal', position: 95, label: 'Bottom' });
       snapY = 95;
     }
