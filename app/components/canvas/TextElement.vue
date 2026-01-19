@@ -348,16 +348,16 @@ watch(
 .hex-input-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 12px;
-  padding: 8px 12px;
+  gap: 3px;
+  margin-top: 8px;
+  padding: 4px 8px;
   background: #f9fafb;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #e5e7eb;
 }
 
 .hex-label {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
   color: #6b7280;
   font-family: 'SF Mono', Monaco, 'Courier New', monospace;
@@ -367,14 +367,14 @@ watch(
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 500;
   font-family: 'SF Mono', Monaco, 'Courier New', monospace;
   color: #111827;
   text-transform: uppercase;
   outline: none;
-  width: 70px;
-  letter-spacing: 0.5px;
+  width: 55px;
+  letter-spacing: 0.3px;
 }
 
 .hex-input::placeholder {
