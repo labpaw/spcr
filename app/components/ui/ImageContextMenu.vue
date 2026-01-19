@@ -1,13 +1,5 @@
 <template>
-  <div
-    v-if="visible"
-    class="context-menu-wrapper"
-    :style="{
-      left: `${position.x}px`,
-      top: `${position.y}px`,
-    }"
-    @click.stop
-  >
+  <div v-if="visible" ref="menuRef" class="context-menu-wrapper" :style="adjustedPosition" @click.stop>
     <div class="context-menu-item" @click="$emit('selectShape')">
       <Icon name="material-symbols:shapes" class="context-icon" />
       <span class="context-text">Shape</span>
@@ -28,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue';
 import type { Position } from '~/types';
 
 interface Props {
@@ -36,12 +29,51 @@ interface Props {
   isLocked?: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 defineEmits<{
   selectShape: [];
   toggleLock: [];
   delete: [];
 }>();
+
+const menuRef = ref<HTMLDivElement | null>(null);
+const menuHeight = ref(0);
+const menuWidth = ref(0);
+
+const adjustedPosition = computed(() => {
+  const padding = 10;
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1000;
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+  let x = props.position.x;
+  let y = props.position.y;
+
+  if (x + menuWidth.value + padding > viewportWidth) {
+    x = Math.max(padding, x - menuWidth.value);
+  }
+
+  if (y + menuHeight.value + padding > viewportHeight) {
+    y = Math.max(padding, y - menuHeight.value);
+  }
+
+  return {
+    left: `${x}px`,
+    top: `${y}px`,
+  };
+});
+
+watch(
+  () => props.visible,
+  async (visible) => {
+    if (visible) {
+      await nextTick();
+      if (menuRef.value) {
+        menuHeight.value = menuRef.value.offsetHeight;
+        menuWidth.value = menuRef.value.offsetWidth;
+      }
+    }
+  },
+);
 </script>
 
 <style scoped>

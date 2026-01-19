@@ -1,13 +1,5 @@
 <template>
-  <div
-    v-if="visible"
-    class="menu-container"
-    :style="{
-      left: `${position.x}px`,
-      top: `${position.y}px`,
-    }"
-    @click.stop
-  >
+  <div v-if="visible" ref="menuRef" class="menu-container" :style="adjustedPosition" @click.stop>
     <button @click="$emit('select', 'text')" class="menu-button">
       <Icon name="material-symbols:text-fields" class="menu-icon" />
       <span>Text</span>
@@ -33,6 +25,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue';
 import type { Position, ElementType, ShapeType } from '~/types';
 
 interface Props {
@@ -40,11 +33,54 @@ interface Props {
   position: Position;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 defineEmits<{
   select: [type: ElementType];
   selectShape: [shapeType: ShapeType];
 }>();
+
+const menuRef = ref<HTMLDivElement | null>(null);
+const menuHeight = ref(0);
+const menuWidth = ref(0);
+
+// Calculate adjusted position to prevent overflow
+const adjustedPosition = computed(() => {
+  const padding = 10; // Padding from viewport edges
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1000;
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+  let x = props.position.x;
+  let y = props.position.y;
+
+  // Adjust horizontal position if menu would overflow right edge
+  if (x + menuWidth.value + padding > viewportWidth) {
+    x = Math.max(padding, x - menuWidth.value);
+  }
+
+  // Adjust vertical position if menu would overflow bottom edge
+  if (y + menuHeight.value + padding > viewportHeight) {
+    y = Math.max(padding, y - menuHeight.value);
+  }
+
+  return {
+    left: `${x}px`,
+    top: `${y}px`,
+  };
+});
+
+// Measure menu dimensions when it becomes visible
+watch(
+  () => props.visible,
+  async (visible) => {
+    if (visible) {
+      await nextTick();
+      if (menuRef.value) {
+        menuHeight.value = menuRef.value.offsetHeight;
+        menuWidth.value = menuRef.value.offsetWidth;
+      }
+    }
+  },
+);
 </script>
 
 <style scoped>
