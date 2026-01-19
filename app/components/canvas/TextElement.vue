@@ -29,7 +29,12 @@
           <div class="color-circle" :style="{ background: element.fontColor || '#000000' }"></div>
         </button>
         <div v-show="showColorPicker" class="color-picker-popup" @click.stop>
-          <UColorPicker v-model="element.fontColor" format="hex" size="sm" />
+          <UColorPicker
+            v-model="element.fontColor"
+            :default-value="element.fontColor || '#000000'"
+            format="hex"
+            size="md"
+          />
         </div>
       </div>
 
@@ -288,6 +293,23 @@ watch(
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 100;
+  min-width: 200px;
+  min-height: 180px;
+}
+
+/* Ensure Nuxt UI ColorPicker styles work in scoped component */
+.color-picker-popup :deep(.picker) {
+  display: flex !important;
+  gap: 16px !important;
+}
+
+.color-picker-popup :deep(.selector) {
+  min-width: 160px !important;
+  min-height: 160px !important;
+}
+
+.color-picker-popup :deep(.track) {
+  min-height: 160px !important;
 }
 
 /* More Options */
