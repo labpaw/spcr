@@ -16,6 +16,7 @@
         left: `${element.x}%`,
         top: `${element.y}%`,
         position: 'absolute',
+        transform: 'translate(-50%, -50%)',
       }"
       @mousedown.stop="handleMouseDown(element, $event)"
       @touchstart.stop="handleTouchStart(element, $event)"
