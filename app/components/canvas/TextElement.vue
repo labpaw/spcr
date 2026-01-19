@@ -24,14 +24,15 @@
 
       <input type="number" v-model.number="element.fontSize" min="8" max="200" class="size-input" title="Font size" />
 
-      <div class="color-picker-wrapper">
-        <button class="color-btn" @click="showColorPicker = !showColorPicker" title="Text color" type="button">
-          <div class="color-circle" :style="{ background: element.fontColor || '#000000' }"></div>
-        </button>
-        <div v-if="showColorPicker" class="color-picker-dropdown">
-          <UColorPicker v-model="element.fontColor" format="hex" size="sm" />
-        </div>
-      </div>
+      <label class="color-btn" title="Text color">
+        <input
+          type="color"
+          :value="element.fontColor || '#000000'"
+          @input="element.fontColor = ($event.target as HTMLInputElement).value"
+          class="color-input-native"
+        />
+        <div class="color-circle" :style="{ background: element.fontColor || '#000000' }"></div>
+      </label>
 
       <button class="tool-btn more-btn" @click="showMore = !showMore" title="More options">
         <span class="tool-icon">⋯</span>
@@ -263,30 +264,21 @@ watch(
   background: #f3f4f6;
 }
 
+.color-input-native {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .color-circle {
   width: 24px;
   height: 24px;
   border-radius: 50%;
   border: 2px solid white;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-}
-
-/* Color Picker Wrapper */
-.color-picker-wrapper {
-  position: relative;
-}
-
-.color-picker-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 8px;
-  padding: 12px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  cursor: pointer;
 }
 
 /* More Options */
