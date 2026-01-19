@@ -16,6 +16,7 @@
       @mousedown.stop="handleMouseDown(element, $event)"
       @touchstart.stop="handleTouchStart(element, $event)"
       @click.stop="handleElementClick(element)"
+      @dblclick.stop="handleElementDblClick(element)"
       @contextmenu.prevent.stop="handleElementContextMenu(element, $event)"
     >
       <!-- Text Element -->
@@ -372,14 +373,27 @@ const handleTouchStart = (element: SpacerElement, e: TouchEvent) => {
 };
 
 /**
- * Handle element click
+ * Handle element click (single-click to select)
  */
 const handleElementClick = (element: SpacerElement) => {
   if (dragState.value.isDragging) return;
 
-  // Select the element
-  selectedElementId.value = element.id;
+  // If already editing this element, don't restart
+  if (editingId.value === element.id) return;
 
+  // Just select the element (don't start editing)
+  selectedElementId.value = element.id;
+  editingId.value = null;
+};
+
+/**
+ * Handle element double-click (to edit text/link)
+ */
+const handleElementDblClick = (element: SpacerElement) => {
+  if (dragState.value.isDragging) return;
+
+  // Select and start editing
+  selectedElementId.value = element.id;
   startEdit(element);
 };
 
