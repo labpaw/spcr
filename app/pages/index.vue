@@ -7,10 +7,7 @@
     <div
       v-for="element in elements"
       :key="element.id"
-      :class="[
-        'group cursor-move select-none transition-shadow duration-200 min-w-[100px] hover:shadow-sm',
-        { 'cursor-auto shadow-lg': editingId === element.id },
-      ]"
+      :class="['group cursor-move select-none min-w-[100px]', { 'cursor-auto': editingId === element.id }]"
       :style="{
         left: `${element.x}%`,
         top: `${element.y}%`,
