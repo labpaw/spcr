@@ -24,26 +24,14 @@
 
       <input type="number" v-model.number="element.fontSize" min="8" max="200" class="size-input" title="Font size" />
 
-      <div class="color-control">
-        <input
-          type="color"
-          :value="element.fontColor || '#000000'"
-          @input="element.fontColor = ($event.target as HTMLInputElement).value"
-          class="color-picker-native"
-          ref="colorPickerRef"
-        />
-        <div class="color-display" @click="colorPickerRef?.click()">
+      <UPopover>
+        <button class="color-btn" title="Text color">
           <div class="color-circle" :style="{ background: element.fontColor || '#000000' }"></div>
-        </div>
-        <input
-          type="text"
-          v-model="element.fontColor"
-          class="hex-input"
-          placeholder="#000000"
-          maxlength="7"
-          @input="validateHex"
-        />
-      </div>
+        </button>
+        <template #content>
+          <UColorPicker v-model="element.fontColor" format="hex" size="sm" class="p-2" />
+        </template>
+      </UPopover>
 
       <button class="tool-btn more-btn" @click="showMore = !showMore" title="More options">
         <span class="tool-icon">⋯</span>
@@ -86,29 +74,7 @@ defineEmits<{
 }>();
 
 const inputRef = ref<HTMLTextAreaElement | null>(null);
-const colorPickerRef = ref<HTMLInputElement | null>(null);
 const showMore = ref(false);
-
-// Validate hex color input
-const validateHex = (e: Event) => {
-  const input = e.target as HTMLInputElement;
-  let value = input.value;
-
-  // Ensure it starts with #
-  if (!value.startsWith('#')) {
-    value = '#' + value;
-  }
-
-  // Only allow valid hex characters
-  value = value.replace(/[^#0-9A-Fa-f]/g, '');
-
-  // Limit to 7 characters (#RRGGBB)
-  if (value.length > 7) {
-    value = value.substring(0, 7);
-  }
-
-  props.element.fontColor = value;
-};
 
 // Font weights for quick selection
 const fontWeights = [
@@ -277,61 +243,31 @@ watch(
   background: #f3f4f6;
 }
 
-/* Color Control */
-.color-control {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+/* Color Button */
+.color-btn {
+  width: 36px;
   height: 36px;
-  padding: 0 8px;
+  padding: 0;
   background: transparent;
+  border: none;
   border-radius: 8px;
-  transition: background 0.15s;
-}
-
-.color-control:hover {
-  background: #f3f4f6;
-}
-
-.color-picker-native {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-  width: 0;
-  height: 0;
-}
-
-.color-display {
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.15s;
+}
+
+.color-btn:hover {
+  background: #f3f4f6;
 }
 
 .color-circle {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 2px solid white;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-}
-
-.hex-input {
-  width: 65px;
-  height: 28px;
-  padding: 0 6px;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 500;
-  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-  color: #111827;
-  outline: none;
-  text-transform: uppercase;
-}
-
-.hex-input::placeholder {
-  color: #9ca3af;
 }
 
 /* More Options */

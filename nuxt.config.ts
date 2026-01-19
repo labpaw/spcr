@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  modules: ['@nuxt/fonts', '@nuxt/icon', '@nuxt/image', '@nuxt/test-utils'],
+  modules: ['@nuxt/ui', '@nuxt/fonts', '@nuxt/icon', '@nuxt/image', '@nuxt/test-utils'],
   fonts: {
     families: [
       { name: 'Inter', provider: 'google', weights: [300, 400, 500, 600, 700, 800] },
