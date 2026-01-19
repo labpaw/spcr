@@ -134,7 +134,7 @@
     <InfoPanel ref="infoPanelRef" />
 
     <!-- Floating Toolbar -->
-    <FloatingToolbar />
+    <FloatingToolbar @align="handleAlign" />
   </div>
 </template>
 
@@ -580,6 +580,41 @@ const handleDeleteElement = () => {
   }
   showContextMenu.value = false;
   contextMenuElement.value = null;
+};
+
+/**
+ * Handle element alignment from toolbar
+ */
+type AlignmentType = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
+
+const handleAlign = (alignment: AlignmentType) => {
+  if (selectedElementId.value === null) return;
+
+  const element = elements.value.find((el) => el.id === selectedElementId.value);
+  if (!element) return;
+
+  switch (alignment) {
+    case 'left':
+      element.x = 5; // 5% from left edge
+      break;
+    case 'center':
+      element.x = 50; // Centered horizontally
+      break;
+    case 'right':
+      element.x = 95; // 5% from right edge
+      break;
+    case 'top':
+      element.y = 5; // 5% from top
+      break;
+    case 'middle':
+      element.y = 50; // Centered vertically
+      break;
+    case 'bottom':
+      element.y = 95; // 5% from bottom
+      break;
+  }
+
+  saveElements();
 };
 </script>
 

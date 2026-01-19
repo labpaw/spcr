@@ -11,14 +11,37 @@
     <!-- Toolbar Content -->
     <div v-if="isExpanded" class="toolbar-content">
       <div class="toolbar-header">
-        <span class="toolbar-title">Tools</span>
+        <span class="toolbar-title">Align</span>
       </div>
 
-      <div class="toolbar-items">
-        <!-- Placeholder items - add more later -->
-        <button class="toolbar-btn" title="Coming soon">
-          <Icon name="material-symbols:settings-outline" class="toolbar-icon" />
-        </button>
+      <div class="toolbar-section">
+        <div class="section-label">Horizontal</div>
+        <div class="toolbar-row">
+          <button class="toolbar-btn" title="Align Left" @click="$emit('align', 'left')">
+            <Icon name="material-symbols:align-horizontal-left" class="toolbar-icon" />
+          </button>
+          <button class="toolbar-btn" title="Align Center" @click="$emit('align', 'center')">
+            <Icon name="material-symbols:align-horizontal-center" class="toolbar-icon" />
+          </button>
+          <button class="toolbar-btn" title="Align Right" @click="$emit('align', 'right')">
+            <Icon name="material-symbols:align-horizontal-right" class="toolbar-icon" />
+          </button>
+        </div>
+      </div>
+
+      <div class="toolbar-section">
+        <div class="section-label">Vertical</div>
+        <div class="toolbar-row">
+          <button class="toolbar-btn" title="Align Top" @click="$emit('align', 'top')">
+            <Icon name="material-symbols:align-vertical-top" class="toolbar-icon" />
+          </button>
+          <button class="toolbar-btn" title="Align Middle" @click="$emit('align', 'middle')">
+            <Icon name="material-symbols:align-vertical-center" class="toolbar-icon" />
+          </button>
+          <button class="toolbar-btn" title="Align Bottom" @click="$emit('align', 'bottom')">
+            <Icon name="material-symbols:align-vertical-bottom" class="toolbar-icon" />
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -27,7 +50,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
+export type AlignmentType = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
+
 const isExpanded = ref(false);
+
+defineEmits<{
+  align: [type: AlignmentType];
+}>();
 </script>
 
 <style scoped>
@@ -105,19 +134,35 @@ const isExpanded = ref(false);
   letter-spacing: 0.5px;
 }
 
-.toolbar-items {
+.toolbar-section {
   padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.toolbar-section:last-child {
+  border-bottom: none;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.toolbar-row {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .toolbar-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -130,8 +175,12 @@ const isExpanded = ref(false);
   border-color: #d1d5db;
 }
 
+.toolbar-btn:active {
+  transform: scale(0.95);
+}
+
 .toolbar-icon {
-  font-size: 20px;
+  font-size: 18px;
   color: #6b7280;
 }
 
