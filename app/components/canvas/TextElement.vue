@@ -24,18 +24,14 @@
 
       <input type="number" v-model.number="element.fontSize" min="8" max="200" class="size-input" title="Font size" />
 
-      <UPopover :popper="{ placement: 'bottom' }">
-        <template #default="{ open }">
-          <button class="color-btn" title="Text color" type="button">
-            <div class="color-circle" :style="{ background: element.fontColor || '#000000' }"></div>
-          </button>
-        </template>
-        <template #content>
-          <div class="p-2">
-            <UColorPicker v-model="element.fontColor" format="hex" size="sm" />
-          </div>
-        </template>
-      </UPopover>
+      <div class="color-picker-wrapper">
+        <button class="color-btn" @click="showColorPicker = !showColorPicker" title="Text color" type="button">
+          <div class="color-circle" :style="{ background: element.fontColor || '#000000' }"></div>
+        </button>
+        <div v-if="showColorPicker" class="color-picker-dropdown">
+          <UColorPicker v-model="element.fontColor" format="hex" size="sm" />
+        </div>
+      </div>
 
       <button class="tool-btn more-btn" @click="showMore = !showMore" title="More options">
         <span class="tool-icon">⋯</span>
@@ -79,6 +75,7 @@ defineEmits<{
 
 const inputRef = ref<HTMLTextAreaElement | null>(null);
 const showMore = ref(false);
+const showColorPicker = ref(false);
 
 // Font weights for quick selection
 const fontWeights = [
@@ -272,6 +269,24 @@ watch(
   border-radius: 50%;
   border: 2px solid white;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Color Picker Wrapper */
+.color-picker-wrapper {
+  position: relative;
+}
+
+.color-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  padding: 12px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
 }
 
 /* More Options */
