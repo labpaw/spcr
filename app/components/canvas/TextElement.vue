@@ -3,14 +3,21 @@
     {{ element.content || 'Click to edit' }}
   </div>
   <div v-else class="editing-container" @click.stop>
-    <textarea
-      v-model="element.content"
-      ref="inputRef"
-      class="text-input"
-      :style="textStyles"
-      placeholder="Type something..."
-      @keydown.escape="$emit('stopEdit')"
-    />
+    <div class="textarea-wrapper" ref="textareaWrapper">
+      <textarea
+        v-model="element.content"
+        ref="inputRef"
+        class="text-input"
+        :style="textStyles"
+        placeholder="Type something..."
+        @keydown.escape="$emit('stopEdit')"
+      />
+      <!-- Resize Handles -->
+      <div class="resize-handle resize-left" @mousedown="startResize($event, 'left')"></div>
+      <div class="resize-handle resize-right" @mousedown="startResize($event, 'right')"></div>
+      <div class="resize-handle resize-bottom" @mousedown="startResize($event, 'bottom')"></div>
+      <div class="resize-handle resize-bottom-right" @mousedown="startResize($event, 'bottom-right')"></div>
+    </div>
 
     <!-- Ultra Minimal Toolbar -->
     <div class="toolbar">
@@ -85,11 +92,57 @@ defineEmits<{
 }>();
 
 const inputRef = ref<HTMLTextAreaElement | null>(null);
+const textareaWrapper = ref<HTMLDivElement | null>(null);
 const showMore = ref(false);
 const showColorPicker = ref(false);
 
 // Local color ref for color picker (ensures default value)
 const localColor = ref('#000000');
+
+// Resize functionality
+const startResize = (e: MouseEvent, direction: string) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (!textareaWrapper.value || !inputRef.value) return;
+
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const startWidth = textareaWrapper.value.offsetWidth;
+  const startHeight = inputRef.value.offsetHeight;
+
+  const onMouseMove = (moveEvent: MouseEvent) => {
+    if (!textareaWrapper.value || !inputRef.value) return;
+
+    const deltaX = moveEvent.clientX - startX;
+    const deltaY = moveEvent.clientY - startY;
+
+    if (direction.includes('right')) {
+      const newWidth = Math.max(200, startWidth + deltaX);
+      textareaWrapper.value.style.width = `${newWidth}px`;
+      inputRef.value.style.width = `${newWidth}px`;
+    }
+
+    if (direction.includes('left')) {
+      const newWidth = Math.max(200, startWidth - deltaX);
+      textareaWrapper.value.style.width = `${newWidth}px`;
+      inputRef.value.style.width = `${newWidth}px`;
+    }
+
+    if (direction.includes('bottom')) {
+      const newHeight = Math.max(60, startHeight + deltaY);
+      inputRef.value.style.height = `${newHeight}px`;
+    }
+  };
+
+  const onMouseUp = () => {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  };
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+};
 
 // Sync local color with element
 watch(
@@ -199,6 +252,11 @@ watch(
   min-width: 280px;
 }
 
+.textarea-wrapper {
+  position: relative;
+  width: fit-content;
+}
+
 .text-input {
   padding: 8px;
   border: 2px dashed rgba(59, 130, 246, 0.4);
@@ -209,10 +267,64 @@ watch(
   min-height: 60px;
   outline: none;
   transition: border-color 0.2s;
+  width: 100%;
+  height: 100%;
 }
 
 .text-input:focus {
   border-color: rgba(59, 130, 246, 0.6);
+}
+
+/* Resize Handles */
+.resize-handle {
+  position: absolute;
+  background: rgba(59, 130, 246, 0.6);
+  border-radius: 50%;
+  z-index: 10;
+}
+
+.resize-handle:hover {
+  background: rgba(59, 130, 246, 0.8);
+}
+
+.resize-left {
+  width: 8px;
+  height: 8px;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.resize-right {
+  width: 8px;
+  height: 8px;
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.resize-bottom {
+  width: 8px;
+  height: 8px;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.resize-bottom-right {
+  width: 10px;
+  height: 10px;
+  bottom: -5px;
+  right: -5px;
+  cursor: nwse-resize;
+  background: #10b981;
+}
+
+.resize-bottom-right:hover {
+  background: #059669;
 }
 
 /* Ultra Minimal Toolbar - Freeform Style */
