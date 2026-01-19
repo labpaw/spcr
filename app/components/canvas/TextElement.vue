@@ -12,50 +12,49 @@
       @keydown.escape="$emit('stopEdit')"
     />
 
-    <!-- Styling Controls -->
-    <div class="style-controls">
-      <!-- Font Size -->
-      <div class="control-group">
-        <label>Size</label>
-        <input type="number" v-model.number="element.fontSize" min="8" max="200" class="size-input" />
-      </div>
-
-      <!-- Font Color -->
-      <div class="control-group">
-        <label>Color</label>
+    <!-- Minimalist Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-section">
+        <input
+          type="number"
+          v-model.number="element.fontSize"
+          min="8"
+          max="200"
+          class="size-control"
+          title="Font size"
+        />
         <input
           type="color"
           :value="element.fontColor || '#000000'"
           @input="element.fontColor = ($event.target as HTMLInputElement).value"
-          class="color-input"
+          class="color-control"
+          title="Text color"
         />
       </div>
 
-      <!-- Font Family -->
-      <div class="control-group">
-        <label>Font</label>
-        <select v-model="element.fontFamily" class="font-select">
+      <div class="toolbar-section">
+        <select v-model="element.fontFamily" class="font-control">
           <option v-for="font in availableFonts" :key="font" :value="font">
             {{ font }}
           </option>
         </select>
       </div>
 
-      <!-- Font Weight -->
-      <div class="control-group">
-        <label>Weight</label>
-        <select v-model.number="element.fontWeight" class="weight-select">
-          <option :value="300">Light</option>
-          <option :value="400">Regular</option>
-          <option :value="500">Medium</option>
-          <option :value="600">Semi Bold</option>
-          <option :value="700">Bold</option>
-          <option :value="800">Extra Bold</option>
-        </select>
+      <div class="toolbar-section">
+        <button
+          v-for="weight in fontWeights"
+          :key="weight.value"
+          @click="element.fontWeight = weight.value"
+          :class="['weight-btn', { active: element.fontWeight === weight.value }]"
+          :title="weight.label"
+        >
+          {{ weight.short }}
+        </button>
       </div>
 
-      <!-- Done Button -->
-      <button class="done-button" @click="$emit('stopEdit')">Done</button>
+      <button class="done-btn" @click="$emit('stopEdit')">
+        <Icon name="material-symbols:check" />
+      </button>
     </div>
   </div>
 </template>
@@ -75,6 +74,14 @@ defineEmits<{
 }>();
 
 const inputRef = ref<HTMLTextAreaElement | null>(null);
+
+// Font weights for quick selection
+const fontWeights = [
+  { value: 300, label: 'Light', short: 'L' },
+  { value: 400, label: 'Regular', short: 'R' },
+  { value: 600, label: 'Semi Bold', short: 'SB' },
+  { value: 700, label: 'Bold', short: 'B' },
+];
 
 // Available Google Fonts
 const availableFonts = [
@@ -164,86 +171,131 @@ watch(
   outline: none;
 }
 
-.style-controls {
+/* Minimalist Toolbar */
+.toolbar {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-  padding: 12px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  width: fit-content;
 }
 
-.control-group {
+.toolbar-section {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 4px;
+  padding: 0 8px;
+  border-right: 1px solid #e5e7eb;
 }
 
-.control-group label {
-  font-size: 11px;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.toolbar-section:last-of-type {
+  border-right: none;
 }
 
-.size-input {
-  width: 60px;
-  padding: 6px 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 14px;
-  outline: none;
-}
-
-.size-input:focus {
-  border-color: #3b82f6;
-}
-
-.color-input {
-  width: 40px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.font-select,
-.weight-select {
-  padding: 6px 8px;
+/* Size Control */
+.size-control {
+  width: 50px;
+  padding: 4px 8px;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.size-control:focus {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+/* Color Control */
+.color-control {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.color-control:hover {
+  border-color: #3b82f6;
+  transform: scale(1.05);
+}
+
+/* Font Control */
+.font-control {
+  padding: 4px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
   background: white;
   cursor: pointer;
   outline: none;
+  transition: all 0.15s;
+  min-width: 100px;
 }
 
-.font-select {
-  min-width: 120px;
-}
-
-.font-select:focus,
-.weight-select:focus {
+.font-control:focus {
   border-color: #3b82f6;
+  background: #eff6ff;
 }
 
-.done-button {
-  padding: 8px 16px;
+/* Weight Buttons */
+.weight-btn {
+  padding: 4px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 32px;
+}
+
+.weight-btn:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.weight-btn.active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+/* Done Button */
+.done-btn {
+  padding: 6px 12px;
   background: #111827;
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 16px;
   cursor: pointer;
-  transition: background 0.15s;
-  margin-left: auto;
-  align-self: flex-end;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
 }
 
-.done-button:hover {
+.done-btn:hover {
   background: #1f2937;
+  transform: scale(1.05);
+}
+
+.done-btn:active {
+  transform: scale(0.95);
 }
 </style>
