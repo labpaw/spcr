@@ -12,49 +12,50 @@
       @keydown.escape="$emit('stopEdit')"
     />
 
-    <!-- Minimalist Toolbar -->
+    <!-- Ultra Minimal Toolbar -->
     <div class="toolbar">
-      <div class="toolbar-section">
-        <input
-          type="number"
-          v-model.number="element.fontSize"
-          min="8"
-          max="200"
-          class="size-control"
-          title="Font size"
-        />
+      <button
+        @click="element.fontWeight = element.fontWeight === 700 ? 400 : 700"
+        :class="['tool-btn', { active: element.fontWeight >= 700 }]"
+        title="Bold"
+      >
+        <span class="tool-icon">B</span>
+      </button>
+
+      <input type="number" v-model.number="element.fontSize" min="8" max="200" class="size-input" title="Font size" />
+
+      <button class="color-btn" title="Text color">
         <input
           type="color"
           :value="element.fontColor || '#000000'"
           @input="element.fontColor = ($event.target as HTMLInputElement).value"
-          class="color-control"
-          title="Text color"
+          class="color-picker"
         />
-      </div>
+        <div class="color-circle" :style="{ background: element.fontColor || '#000000' }"></div>
+      </button>
 
-      <div class="toolbar-section">
-        <select v-model="element.fontFamily" class="font-control">
-          <option v-for="font in availableFonts" :key="font" :value="font">
-            {{ font }}
-          </option>
-        </select>
-      </div>
+      <button class="tool-btn more-btn" @click="showMore = !showMore" title="More options">
+        <span class="tool-icon">⋯</span>
+      </button>
+    </div>
 
-      <div class="toolbar-section">
+    <!-- Expanded Options -->
+    <div v-if="showMore" class="more-options">
+      <select v-model="element.fontFamily" class="font-select">
+        <option v-for="font in availableFonts" :key="font" :value="font">
+          {{ font }}
+        </option>
+      </select>
+      <div class="weight-options">
         <button
           v-for="weight in fontWeights"
           :key="weight.value"
           @click="element.fontWeight = weight.value"
-          :class="['weight-btn', { active: element.fontWeight === weight.value }]"
-          :title="weight.label"
+          :class="['weight-option', { active: element.fontWeight === weight.value }]"
         >
-          {{ weight.short }}
+          {{ weight.label }}
         </button>
       </div>
-
-      <button class="done-btn" @click="$emit('stopEdit')">
-        <Icon name="material-symbols:check" />
-      </button>
     </div>
   </div>
 </template>
@@ -74,6 +75,7 @@ defineEmits<{
 }>();
 
 const inputRef = ref<HTMLTextAreaElement | null>(null);
+const showMore = ref(false);
 
 // Font weights for quick selection
 const fontWeights = [
@@ -176,131 +178,155 @@ watch(
   border-color: rgba(59, 130, 246, 0.6);
 }
 
-/* Minimalist Toolbar */
+/* Ultra Minimal Toolbar - Freeform Style */
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  gap: 4px;
+  padding: 4px;
+  background: white;
+  border-radius: 20px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
   width: fit-content;
 }
 
-.toolbar-section {
+/* Tool Button */
+.tool-btn {
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 8px;
-  border-right: 1px solid #e5e7eb;
-}
-
-.toolbar-section:last-of-type {
-  border-right: none;
-}
-
-/* Size Control */
-.size-control {
-  width: 50px;
-  padding: 4px 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  text-align: center;
-  outline: none;
-  transition: all 0.15s;
-}
-
-.size-control:focus {
-  border-color: #3b82f6;
-  background: #eff6ff;
-}
-
-/* Color Control */
-.color-control {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 2px solid #e5e7eb;
-  border-radius: 6px;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s;
 }
 
-.color-control:hover {
-  border-color: #3b82f6;
-  transform: scale(1.05);
+.tool-btn:hover {
+  background: #f3f4f6;
 }
 
-/* Font Control */
-.font-control {
-  padding: 4px 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 12px;
+.tool-btn.active {
+  background: #e5e7eb;
+}
+
+.tool-icon {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Size Input */
+.size-input {
+  width: 42px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 16px;
   font-weight: 500;
+  color: #111827;
+  outline: none;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.size-input:hover {
+  background: #f3f4f6;
+}
+
+.size-input:focus {
+  background: #f3f4f6;
+}
+
+/* Color Button */
+.color-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.color-btn:hover {
+  background: #f3f4f6;
+}
+
+.color-picker {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.color-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+
+/* More Options */
+.more-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.font-select {
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
   background: white;
   cursor: pointer;
   outline: none;
-  transition: all 0.15s;
-  min-width: 100px;
 }
 
-.font-control:focus {
-  border-color: #3b82f6;
-  background: #eff6ff;
+.weight-options {
+  display: flex;
+  gap: 4px;
 }
 
-/* Weight Buttons */
-.weight-btn {
-  padding: 4px 10px;
+.weight-option {
+  flex: 1;
+  padding: 8px;
   border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
+  border-radius: 8px;
+  font-size: 13px;
   background: white;
   color: #6b7280;
   cursor: pointer;
   transition: all 0.15s;
-  min-width: 32px;
 }
 
-.weight-btn:hover {
-  border-color: #d1d5db;
+.weight-option:hover {
   background: #f9fafb;
 }
 
-.weight-btn.active {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  color: #3b82f6;
-}
-
-/* Done Button */
-.done-btn {
-  padding: 6px 12px;
+.weight-option.active {
+  border-color: #111827;
   background: #111827;
   color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 4px;
-}
-
-.done-btn:hover {
-  background: #1f2937;
-  transform: scale(1.05);
-}
-
-.done-btn:active {
-  transform: scale(0.95);
 }
 </style>
